@@ -47,7 +47,11 @@
 #define HOSTNAME	"Preky"
 #define PROFILE		__s(CONFIG_PROFILE)
 #define MACHINE		__s(CONFIG_MACHINE)
+#ifdef GITREV
+#define VERSION		__s(MAJORVERSION) "." __s(MINORVERSION) "." __s(PATCHLEVEL) "-" GITREV
+#else
 #define VERSION		__s(MAJORVERSION) "." __s(MINORVERSION) "." __s(PATCHLEVEL)
+#endif
 
 #define BANNER		"Prex version " VERSION PROFILE " for " MACHINE \
 			" ("__DATE__ ")\n" \

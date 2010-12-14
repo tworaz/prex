@@ -146,6 +146,16 @@ gethost()
 	esac
 }
 
+gitrev()
+{
+	git_bin=$(which git)
+	if [ $? -eq 0 -a -x .git ]; then
+		gitr=$(git rev-parse --short=7 HEAD)
+		echo "GITREV=${gitr}"
+		echo "#define GITREV \"${gitr}\"" >> $CONFIG_H
+	fi
+}
+
 # Set the gcc option only when it's supported.
 setgccoption()
 {
@@ -384,6 +394,7 @@ main()
 
 	parseconfig $CONFIG_IN
 	parseconfig $SECURITY_IN
+	gitrev
 
 	cat $DRVTAB_TMP >> $DRVTAB_H
 	echo "};" >> $DRVTAB_H
