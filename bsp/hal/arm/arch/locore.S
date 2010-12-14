@@ -137,7 +137,13 @@ ENTRY(reset_entry)
 
 	mov	r1, #(BOOT_PGD_PHYS + 0x2000) /* Set PTE0 address in pgd */
 	mov	r0, #BOOT_PTE0_PHYS	/* WBUF/CACHE/SYSTEM attribute */
-	orr	r0, r0, #0x03
+	orr     r0, r0, #0x11
+	str     r0, [r1], #4
+	add     r0, r0, #0x400
+	str     r0, [r1], #4
+	add     r0, r0, #0x400
+	str     r0, [r1], #4
+	add     r0, r0, #0x400
 	str	r0, [r1]
 
 	mov	r1, #BOOT_PTE0_PHYS	/* Fill boot page table entry */
@@ -156,7 +162,7 @@ ENTRY(reset_entry)
 	 */
 	mov	r1, #BOOT_PGD_PHYS	/* Set PTE0 address in pgd */
 	mov	r0, #BOOT_PTE0_PHYS	/* WBUF/CACHE/SYSTEM attribute */
-	orr	r0, r0, #0x03
+	orr r0, r0, #0x11
 	str	r0, [r1]
 
 	mov	r0, #0
