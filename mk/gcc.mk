@@ -8,7 +8,8 @@ OUTPUT_OPTION=	-o $@
 DEFINES=	$(addprefix -D,$(DEFS))
 
 CFLAGS+=	-c -Os -ansi -pedantic -Wall -Wundef -Wstrict-prototypes \
-		-Wpointer-arith -nostdinc -fno-strict-aliasing $(GCCFLAGS)
+		-Wpointer-arith -nostdinc -fno-strict-aliasing \
+		-fno-dollars-in-identifiers $(GCCFLAGS)
 CPPFLAGS+=	$(DEFINES) -I. $(addprefix -I,$(INCSDIR))
 ACPPFLAGS+=	-D__ASSEMBLY__
 LDFLAGS+=	-static -nostdlib $(addprefix -L,$(LIBSDIR))
