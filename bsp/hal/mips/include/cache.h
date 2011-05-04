@@ -27,27 +27,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _NANONOTE_PLATFORM_H
-#define _NANONOTE_PLATFORM_H
+#ifndef _MIPS_CACHE_H
+#define _MIPS_CACHE_H
 
-#include <mips/cpuregs.h>
+#ifndef __ASSEMBLY__
 
-#define UART_BASE 	(0x10030000 | MIPS_KSEG1)
+__BEGIN_DECLS
+void	 cache_init(void);
+__END_DECLS
 
-/* UART Registers */
-#define UART_THR	(*(volatile uint8_t *)(UART_BASE + 0x00))
-#define UART_IER	(*(volatile uint8_t *)(UART_BASE + 0x04))
-#define UART_FCR	(*(volatile uint8_t *)(UART_BASE + 0x08))
-#define UART_LSR 	(*(volatile uint8_t *)(UART_BASE + 0x14))
-
-/* LSR Register Bits */
-#define UART_LSR_DRY	(1 << 0)
-#define UART_LSR_OVER	(1 << 1)
-#define UART_LSR_PARER	(1 << 2)
-#define UART_LSR_FMER	(1 << 3)
-#define UART_LSR_BI	(1 << 4)
-#define UART_LSR_TDRQ	(1 << 5)
-#define UART_LSR_TEMP	(1 << 6)
-#define UART_LSR_FIFOE	(1 << 7)
-
-#endif /* !_NANONOTE_PLATFORM_H */
+#endif /* !__ASSEMBLY__ */
+#endif /* !_MIPS_CACHE_H */

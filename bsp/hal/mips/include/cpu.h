@@ -30,52 +30,6 @@
 #ifndef _MIPS_CPU_H
 #define _MIPS_CPU_H
 
-#if 0
-/*
- * Processor Status Register
- */
-#define PSR_MODE	0x0000001f
-#define PSR_USR_MODE	0x00000010
-#define PSR_FIQ_MODE	0x00000011
-#define PSR_IRQ_MODE	0x00000012
-#define PSR_SVC_MODE	0x00000013
-#define PSR_ABT_MODE	0x00000017
-#define PSR_UND_MODE	0x0000001b
-#define PSR_SYS_MODE	0x0000001f
-
-#define PSR_THUMB	0x00000020
-
-#define PSR_INT_MASK	0x000000c0
-#define PSR_FIQ_DIS	0x00000040
-#define PSR_IRQ_DIS	0x00000080
-
-#ifdef __gba__
-#define PSR_APP_MODE	PSR_SYS_MODE
-#else
-#define PSR_APP_MODE	PSR_USR_MODE
-#endif
-
-/*
- * Contorl register CP15 register 1
- */
-#define CTL_MMU		0x000000001	/* M: MMU/Protection unit enable */
-#define CTL_AFLT	0x000000002	/* A: Alignment fault enable */
-#define CTL_CACHE	0x000000004	/* C: Cache enable */
-#define CTL_WBUF	0x000000008	/* W: Write buffer enable */
-#define CTL_32BP	0x000000010	/* P: 32-bit exception handlers */
-#define CTL_32BD	0x000000020	/* D: 32-bit addressing */
-#define CTL_LABT	0x000000040	/* L: Late abort enable */
-#define CTL_BIGEND	0x000000080	/* B: Big-endian mode */
-#define CTL_SYSP	0x000000100	/* S: System protection bit */
-#define CTL_ROMP	0x000000200	/* R: ROM protection bit */
-#define CTL_BPRD	0x000000800	/* Z: Branch prediction enable */
-#define CTL_ICACHE	0x000001000	/* I: Instruction cache enable */
-#define CTL_HIVEC	0x000002000	/* V: Vector relocation */
-
-#define CTL_DEFAULT	(CTL_32BP | CTL_32BD | CTL_LABT)
-
-#endif
-
 #ifndef __ASSEMBLY__
 
 __BEGIN_DECLS

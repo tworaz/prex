@@ -27,27 +27,24 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _NANONOTE_PLATFORM_H
-#define _NANONOTE_PLATFORM_H
+/*
+ * cache.S - low level cache management routines
+ */
 
-#include <mips/cpuregs.h>
+#include <conf/config.h>
+#include <machine/asm.h>
 
-#define UART_BASE 	(0x10030000 | MIPS_KSEG1)
+#ifdef CONFIG_CACHE
 
-/* UART Registers */
-#define UART_THR	(*(volatile uint8_t *)(UART_BASE + 0x00))
-#define UART_IER	(*(volatile uint8_t *)(UART_BASE + 0x04))
-#define UART_FCR	(*(volatile uint8_t *)(UART_BASE + 0x08))
-#define UART_LSR 	(*(volatile uint8_t *)(UART_BASE + 0x14))
+/*
+ * Enable cache
+ */
+ENTRY(cache_init)
+	.set noreorder
+	mtc0	zero, COP_0_TAGLO
+        jr	ra
+	nop
+	.set reorder
 
-/* LSR Register Bits */
-#define UART_LSR_DRY	(1 << 0)
-#define UART_LSR_OVER	(1 << 1)
-#define UART_LSR_PARER	(1 << 2)
-#define UART_LSR_FMER	(1 << 3)
-#define UART_LSR_BI	(1 << 4)
-#define UART_LSR_TDRQ	(1 << 5)
-#define UART_LSR_TEMP	(1 << 6)
-#define UART_LSR_FIFOE	(1 << 7)
+#endif /* CONFIG_CACHE */
 
-#endif /* !_NANONOTE_PLATFORM_H */

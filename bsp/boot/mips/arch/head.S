@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011, Peter Twore
+ * Copyright (c) 2011, Peter Tworek
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,7 @@ ENTRY(boot_entry)
         mflo	s3         /* I-cache size */
 
 	/* Flush caches */
-        li	t0, MIPS_KSEG1_START
+        li	t0, MIPS_KSEG1
         add	t1, t0, s3
         or	t2, t0, t0
         add	t3, t1, s1

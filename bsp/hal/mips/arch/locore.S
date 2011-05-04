@@ -166,16 +166,6 @@ ENTRY(cpu_switch)
         j	cpu_switch
         nop
 
-#ifdef CONFIG_CACHE
-/*
- * Enable cache
- */
-ENTRY(cache_init)
-/* TODO: implement */
-        jr	ra
-        nop
-#endif /* !CONFIG_CACHE */
-
 /*
  * System call entry
  */

@@ -30,22 +30,22 @@
 #ifndef	_MIPS_MEMORY_H
 #define	_MIPS_MEMORY_H
 
+#include <mips/cpuregs.h>
+
 #include <conf/config.h>
 
-/*
-#ifdef CONFIG_MMU
-*/
 /* 
  * On mips kernel will use kseg0, kseg 1 regions 
  * which are already mapped to 0x80000000
  */
 #define KERNBASE	0x00000000	/* offset of kernel address space */
+
+#ifdef CONFIG_MMU
 #define PAGE_SIZE	4096		/* bytes per page */
-#define USERLIMIT	0x80000000	/* upper limit on user address space */
-/*
+#define USERLIMIT	MIPS_KSEG0	/* upper limit on user address space */
 #else
-# error "MMU-less MIPS version of Prex not implemented"
+#define PAGE_SIZE	1024		/* bytes per page */
+#define USERLIMIT	MIPS_KSER1	/* upper limit on user address space */
 #endif
-*/
 
 #endif	/* _MIPS_MEMORY_H */

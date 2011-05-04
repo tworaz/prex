@@ -44,10 +44,10 @@
  * Caching of mapped addresses is controlled by bits in the TLB entry.
  */
 
-#define	MIPS_KUSEG_START		0x0
-#define	MIPS_KSEG0_START		0x80000000
-#define	MIPS_KSEG1_START		0xa0000000
-#define	MIPS_KSEG2_START		0xc0000000
+#define	MIPS_KUSEG			0x0
+#define	MIPS_KSEG0			0x80000000
+#define	MIPS_KSEG1			0xa0000000
+#define	MIPS_KSEG2			0xc0000000
 #define	MIPS_MAX_MEM_ADDR		0xbe000000
 #define	MIPS_RESERVED_ADDR		0xbfc80000
 

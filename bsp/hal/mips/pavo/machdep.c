@@ -40,6 +40,7 @@
 #include <cpu.h>
 #include <cpufunc.h>
 #include <locore.h>
+#include <cache.h>
 
 #include "platform.h"
 
@@ -167,7 +168,13 @@ machine_startup(void)
 	 * Initialize CPU and basic hardware.
 	 */
 	cpu_init();
+
+#ifdef CONFIG_CACHE
+	/*
+	 * Initialize CPU cache
+	 */
 	cache_init();
+#endif
 
 	/*
 	 * Reserve system pages.

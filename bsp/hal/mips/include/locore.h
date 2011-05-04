@@ -44,7 +44,6 @@ void	 known_fault1(void);
 void	 known_fault2(void);
 void	 known_fault3(void);
 void	 copy_fault(void);
-void	 cache_init(void);
 void	 sploff(void);
 void	 splon(void);
 __END_DECLS

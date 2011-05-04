@@ -31,7 +31,7 @@
 #include <sys/param.h>
 #include <boot.h>
 
-#define UART_BASE 	(0x10030000 | MIPS_KSEG1_START)
+#define UART_BASE 	(0x10030000 | MIPS_KSEG1)
 
 /* UART Registers */
 #define UART_THR	(*(volatile uint8_t *)(UART_BASE + 0x00))
