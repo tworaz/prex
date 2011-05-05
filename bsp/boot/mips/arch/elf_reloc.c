@@ -48,8 +48,6 @@ relocate_rel(Elf32_Rel *rel, Elf32_Addr sym_val, char *target_sect)
 	Elf32_Sword addend, addend_lo;
 	int32_t i = 0;
 	
-        ELFDBG(("INFO: rel = %lx, target_sect = %lx, rel->r_offset = %lx\n",
-                (long)rel, (long)target_sect, (long)rel->r_offset));
 	where = (Elf32_Addr *)(target_sect + rel->r_offset);
 	
 	switch (ELF32_R_TYPE(rel->r_info)) {
