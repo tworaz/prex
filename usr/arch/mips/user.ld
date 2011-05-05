@@ -1,3 +1,6 @@
+/*
+ * Linker script for userspace
+ */
 OUTPUT_FORMAT("elf32-littlemips", "elf32-bigmips", "elf32-littlemips")
 OUTPUT_ARCH(mips)
 ENTRY(_start)
@@ -12,23 +15,44 @@ SECTIONS
 
 	.text : {
 		*(.text)
+		*(.text.*)
 	} : text = 0xff
+
 	. = ALIGN(4);
+
 	.rodata : {
 		*(.rodata)
 		*(.rodata.*)
 	} : text
-	. = ALIGN(0x1000);
-	.data : {
-                *(.sdata)
-                *(.sdata2)
-		*(.data)
-	} : data
-        _gp = ABSOLUTE(.);
+
 	. = ALIGN(4);
-	.bss .  : {
-                *(.sbss)
+
+	.data . : {
+		*(.data)
+		*(.data.*)
+		*(.data1)
+		*(.data1.*)
+		. = ALIGN(8);
+		_gp = ABSOLUTE(.);
+                *(.sdata)
+                *(.sdata.*)
+	} : data = 0xff
+
+	. = ALIGN(4);
+
+	.sbss . : {
+		*(.sbss)
+		*(.sbss.*)
+		*(.dynsbss)
+		*(.scommon)
+	}
+
+	. = ALIGN(4);
+
+	.bss . : {
 		*(.bss)
+		*(.bss.*)
+		*(.dynbss)
 		*(COMMON)
 	}
 

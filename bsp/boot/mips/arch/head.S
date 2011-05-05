@@ -67,7 +67,7 @@ ENTRY(boot_entry)
 
         /* Setup sp and gp */
         li	sp, BOOTSTK
-        or	gp, zero, zero
+	la	gp, _gp
 
         /* Get D-cache params */
         mfc0	t9, COP_0_CONFIG, 1

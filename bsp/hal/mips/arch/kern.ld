@@ -16,27 +16,46 @@ SECTIONS
 
 	.text : {
 		*(.text)
+		*(.text.*)
 	} : text = 0xff
+
 	. = ALIGN(4);
+
 	.rodata : {
 		*(.rodata)
 		*(.rodata.*)
 	} : text
-	.data ALIGN(4) : {
-                *(.sdata)
-                *(.sdata2)
-		*(.data)
-	} : data = 0xff
-	_gp = ABSOLUTE(.);
+
 	. = ALIGN(4);
-	__bss = . ;
-	.bss .    : {
-                *(.sbss)
+
+	.data . : {
+		*(.data)
+		*(.data.*)
+		*(.data1)
+		*(.data1.*)
+		. = ALIGN(8);
+		_gp = ABSOLUTE(.);
+                *(.sdata)
+                *(.sdata.*)
+	} : data = 0xff
+
+	. = ALIGN(4);
+
+	.sbss . : {
+		*(.sbss)
+		*(.sbss.*)
+		*(.dynsbss)
+		*(.scommon)
+	}
+
+	. = ALIGN(4);
+
+	.bss . : {
 		*(.bss)
+		*(.bss.*)
+		*(.dynbss)
 		*(COMMON)
 	}
-	. = ALIGN(4);
-	__end = . ;
 
 	/DISCARD/ : { *(.comment .pdr .note) }
 }
