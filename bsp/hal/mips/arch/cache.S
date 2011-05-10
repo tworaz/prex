@@ -90,12 +90,12 @@ ENTRY(cache_init)
 	add	t1, t0, a3
 	or	t2, t0, t0
 	add	t3, t2, a1
-	1:	/* I-cache */
-cache	Index_Store_Tag_I, 0(t0)
+1:	/* I-cache */
+	cache	Index_Store_Tag_I, 0(t0)
 	bne	t0, t1, 1b
 	addu	t0, t0, a2
-	2:	/* D-cache */
-cache	Index_Store_Tag_D, 0(t2)
+2:	/* D-cache */
+	cache	Index_Store_Tag_D, 0(t2)
 	bne	t2, t3, 2b
 	addu	t2, t2, a0
 
