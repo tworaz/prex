@@ -44,8 +44,8 @@
  */
 ENTRY(cpu_idle)
 	wait
-        jr	ra
-        nop
+	jr	ra
+	nop
 
 /*
  * Disable interrupts by clearing IE bit in SR

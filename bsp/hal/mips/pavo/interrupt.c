@@ -188,9 +188,6 @@ interrupt_init(void)
 
 	irq_level = IPL_NONE;
 
-	/* Enable ICU clock */
-	/* CPM_CLKGR &= ~(1 << CPM_CLKGR_ICU);*/
-
 	/* Mask all interrupts */
 	INTC_ICMSR = 0xFFFFFFFF;
 

@@ -38,7 +38,7 @@
 #ifdef CONFIG_CACHE
 
 	.section ".text","ax"
-        .set noreorder
+	.set noreorder
 	.set mips32
 
 /*

@@ -32,7 +32,7 @@
 
 #define Index_Invalidate_I      0x00
 #define Index_Writeback_Inv_D   0x01
-#define Index_Store_Tag_I	0x08
-#define Index_Store_Tag_D	0x09
+#define Index_Store_Tag_I       0x08
+#define Index_Store_Tag_D       0x09
 
 #endif
