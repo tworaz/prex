@@ -35,8 +35,9 @@
 #include <conf/config.h>
 
 /* 
- * On mips kernel will use kseg0, kseg 1 regions 
- * which are already mapped to 0x80000000
+ * On mips kernel will use kseg0 and kseg1 regions
+ * which are already mapped to 0x80000000 but are
+ * physically at 0x00000000.
  */
 #define KERNBASE	0x00000000	/* offset of kernel address space */
 

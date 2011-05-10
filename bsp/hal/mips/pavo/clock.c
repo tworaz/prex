@@ -59,32 +59,51 @@ clock_isr(void *arg)
 void
 clock_init(void)
 {
-#if 0
 	irq_t clock_irq;
+	uint16_t tmp16;
 
-	/* Reset */
-	TMR_TCFG0 = 0x0;
-	TMR_TCFG1 = 0;
-	TMR_TCON = 0x0;
+	/* Enable TCU clock */
+	CPM_CLKGR &= ~(1 << CPM_CLKGR_TCU);
+
+	/* Stop counter 0 */
+	TCU_TECR = (1 << 0);
+
+	/* Select EXTAL as the timer clock input */
+	tmp16  = TCU_TCSR0;
+	tmp16 &= ~(TCU_TCSR_EXT_EN | TCU_TCSR_RTC_EN | TCU_TCSR_PCK_EN);
+	tmp16 |= TCU_TCSR_EXT_EN;
+	/* TCU_TCSR0 = tmp16; */
+
+	/* Set Prescale CLK/4 */
+	/* tmp16  = TCU_TCSR0; */
+	tmp16 &= ~(TCU_TCSR_PRESCALE_MASK);
+	tmp16 |= (1 << TCU_TCSR_PRESCALE_BIT);
+	/* TCU_TCSR0 = tmp16; */
+
+	/* Disable PWM output */
+	/* tmp16  = TCU_TCSR0; */
+	tmp16 &= ~(TCU_TCSR_PWM_EN);
+	TCU_TCSR0 = tmp16;
+
+	/* Set full data */
+	TCU_TDFR0 = CONFIG_JZ_EXTAL / HZ / 4;
+
+	/* Mask half-match IRQ */
+	TCU_TMSR = (1 << 16);
+	/* Clear full match flag */
+	TCU_TFCR = (1 << 0);
+	/* Unmask full-match IRQ */
+	TCU_TMCR = (1 << 0);
+	/* Clear TCNT */
+	TCU_TCNT0 = 0;
 
 	/* Install ISR */
-	clock_irq = irq_attach(CLOCK_IRQ, IPL_CLOCK, 0, &clock_isr,
+	clock_irq = irq_attach(IRQ_TCU0, IPL_CLOCK, 0, &clock_isr,
 			       IST_NONE, NULL);
 	ASSERT(clock_irq != NULL);
 
-	/* set prescaler for Timer 4 to 10 */
-	TMR_TCFG0 = 0x0A00;
-
-	/* Setup counter value */
-	TMR_TCNTB4 = get_PCLK()/(2 * 10 * HZ);
-
-	/* auto load, manual update of Timer 4 */
-	TMR_TCON = (TMR_TCON & ~0x0700000) | 0x600000;
-	/* auto load, start Timer 4 */
-	TMR_TCON = (TMR_TCON & ~0x0700000) | 0x500000;
+	TCU_TESR = (1 << 0);
 
 	DPRINTF(("Clock rate: %d ticks/sec\n", CONFIG_HZ));
-#endif
-        panic("TODO: implement clock_init()");
 }
 

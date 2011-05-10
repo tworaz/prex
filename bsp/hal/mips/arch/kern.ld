@@ -21,6 +21,21 @@ SECTIONS
 
 	. = ALIGN(4);
 
+	.vectors . : {
+		_vector_start = .;
+		*(.vector.000);
+		. = 0x100;
+		*(.vector.100);
+		. = 0x180;
+		*(.vector.180);
+		. = 0x200;
+		*(.vector.200);
+		*(.vector);
+		_vector_end = .;
+	} :text
+
+	. = ALIGN(4);
+
 	.rodata : {
 		*(.rodata)
 		*(.rodata.*)
@@ -41,6 +56,7 @@ SECTIONS
 
 	. = ALIGN(4);
 
+	__bss = .;
 	.sbss . : {
 		*(.sbss)
 		*(.sbss.*)
@@ -56,6 +72,8 @@ SECTIONS
 		*(.dynbss)
 		*(COMMON)
 	}
+	. = ALIGN(4);
+	__end = .;
 
 	/DISCARD/ : { *(.comment .pdr .note) }
 }

@@ -38,7 +38,7 @@ void	 syscall_ret(void);
 void	 kernel_thread_entry(void);
 void	 cpu_switch(struct kern_regs *, struct kern_regs *);
 void	 interrupt_entry(void);
-void	 vector_copy(vaddr_t);
+void	 vector_copy(paddr_t);
 void	 cpu_init(void);
 void	 known_fault1(void);
 void	 known_fault2(void);

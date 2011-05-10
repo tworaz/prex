@@ -36,75 +36,38 @@
 #include <cpu.h>
 
 	.section ".text","ax"
-        .set noreorder
+	.set noreorder
+	.set mips32
 
+/*
+ * Sit idle doing nothing until some interrupt arrives
+ */
 ENTRY(cpu_idle)
+	wait
         jr	ra
         nop
 
-#if 0
 /*
- * Fault information
+ * Disable interrupts by clearing IE bit in SR
  */
-ENTRY(get_faultstatus)
-	mrc	p15, 0, r0, c5, c0, 0
-	mov	pc, lr
-
-ENTRY(get_faultaddress)
-	mrc	p15, 0, r0, c6, c0, 0
-	mov	pc, lr
-
-
-#ifdef CONFIG_MMU
-/*
- * Get TTB - Translation Table Base register
- */
-ENTRY(get_ttb)
-	mrc	p15, 0, r0, c2, c0, 0
-	mov	pc, lr
+ENTRY(irq_off)
+	mfc0	t0, COP_0_STATUS
+	nop
+	and	t0, t0, ~0x1
+	mtc0	t0, COP_0_STATUS
+	jr	ra
+	nop
 
 /*
- * Set TTB
+ * Enable interrupts by setting IE bit in SR
  */
-ENTRY(set_ttb)
-	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+ENTRY(irq_on)
+	mfc0	t0, COP_0_STATUS
 	nop
+	or	t0, t0, 0x1
+	mtc0	t0, COP_0_STATUS
+	jr	ra
 	nop
-	nop
-	mov	pc, lr
 
-/*
- * Switch TTB for context switch
- */
-ENTRY(switch_ttb)
-	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
-	mcr	p15, 0, r0, c7, c6, 0	/* flush D cache */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	mcr	p15, 0, r0, c2, c0, 0	/* set the new TTB */
-	mcr	p15, 0, r0, c8, c7, 0	/* and flush the I+D tlbs */
-	nop
-	nop
-	nop
-	mov	pc, lr
-
-/*
- * Flush TLB
- */
-ENTRY(flush_tlb)
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-	mov	pc, lr
-
-#endif /* !CONFIG_MMU */
-
-/*
- * Flush all cache
- */
-ENTRY(flush_cache)
-	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
-	mcr	p15, 0, r0, c7, c6, 0	/* flush D cache */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mov	pc, lr
-
-	.end
-#endif
+	.set reorder
+	.set mips0

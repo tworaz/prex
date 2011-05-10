@@ -181,14 +181,14 @@ machine_startup(void)
 	 */
 	page_reserve(kvtop(SYSPAGE), SYSPAGESZ);
 
-#if 0
 	/*
 	 * Setup vector page.
 	 */
-	vector_copy((vaddr_t)ptokv(CONFIG_ARM_VECTORS));
-#endif
+	page_reserve(kvtop(MIPS_KSEG0),PAGE_SIZE);
+	vector_copy(MIPS_KSEG1);
 
 #ifdef CONFIG_MMU
+	panic("TODO: initialize MMU\n");
 	/*
 	 * Initialize MMU
 	 */

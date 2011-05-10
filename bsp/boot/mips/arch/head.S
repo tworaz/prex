@@ -43,12 +43,13 @@
 #define ENTRY(x) .global x; .align; x##:
 
 	.section ".text","ax"
+	.set noreorder
+	.set mips32
+
 /*
  * Loader entry point
  */
 ENTRY(boot_entry)
-	.set noreorder
-        .set mips32
         bal	1f
         li	k0, 0x1 /* 1 can come in handy */
 1:
@@ -71,6 +72,7 @@ ENTRY(boot_entry)
 
         /* Get D-cache params */
         mfc0	t9, COP_0_CONFIG, 1
+	nop
         srl	t9, t9, 7
         andi	t0, t9, 0x7  /* DA */
         srl	t9, t9, 3
@@ -109,7 +111,7 @@ ENTRY(boot_entry)
         li	t0, MIPS_KSEG1
         add	t1, t0, s3
         or	t2, t0, t0
-        add	t3, t1, s1
+        add	t3, t2, s1
 2:	/* I-cache */
 	cache	Index_Invalidate_I, 0(t0)
         bne	t0, t1, 2b
@@ -152,5 +154,7 @@ copy_image:
 	.section .tail,"ax"
 dummy:
 	.byte	0xff
+
+	.set mips0
 	.set reorder
 

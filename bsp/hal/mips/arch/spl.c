@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2008-2009, Kohsuke Ohtani
+ * Copyright (c) 2011, Peter Tworek
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,43 +27,46 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/bootinfo.h>
-#include <boot.h>
+#include <hal.h>
 
-/*
- * Setup boot information.
- */
-static void
-bootinfo_init(void)
+/* Highest SPL level */
+#define SPL_HIGH	15
+
+/* Start with interrupts disabled */
+int curspl = SPL_HIGH;
+
+/* Forward declarations */
+void irq_off(void);
+void irq_on(void);
+
+int spl_set(int newspl)
 {
-	struct bootinfo *bi = bootinfo;
+	int oldspl;
 
-	/*
-	 * Screen size
-	 */
-	bi->video.text_x = 80;
-	bi->video.text_y = 25;
+	if (newspl > 0) {
+		irq_off();
+	} else if (newspl == 0) {
+		irq_on();
+	}
 
-        /*
-         * Built-in SRAM - 16K
-         */
-        bi->ram[0].base = 0x80000000;
-        bi->ram[0].size = 0x00004000;
-        bi->ram[0].type = MT_USABLE;
+	oldspl = curspl;
+	curspl = newspl;
 
-	/*
-	 * On-board SDRAM
-	 */
-	bi->ram[1].base = 0x80004000;
-	bi->ram[1].size = CONFIG_RAM_SIZE;
-	bi->ram[1].type = MT_USABLE;
-
-	bi->nr_rams = 2;
+	return oldspl;
 }
 
-void
-startup(void)
+int splhigh(void)
 {
-	bootinfo_init();
+	return spl_set(SPL_HIGH);
 }
+
+int spl0(void)
+{
+	return spl_set(0);
+}
+
+void splx(int newspl)
+{
+	spl_set(newspl);
+}
+ 

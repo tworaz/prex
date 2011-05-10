@@ -60,7 +60,6 @@
 void
 context_set(context_t ctx, int type, register_t val)
 {
-#if 0
 	struct kern_regs *k;
 	struct cpu_regs *u;
 
@@ -75,25 +74,27 @@ context_set(context_t ctx, int type, register_t val)
 
 		/* Reset minimum user mode registers */
 		u = ctx->uregs;
-		u->r0 = 0;
-		u->r1 = 0x11111111;
-		u->r2 = 0x22222222;
-		u->r3 = 0x33333333;
-		u->svc_sp = (uint32_t)val;
-		u->cpsr = PSR_APP_MODE;	/* FIQ/IRQ is enabled */
+		u->a0 = 0;
+		u->a1 = 0x11111111;
+		u->a2 = 0x22222222;
+		u->a3 = 0x33333333;
+		printf("TODO: context_set CTX_KSTACK\n");
+		/*
+		u->sr = xxx;
+		*/
 		break;
 
 	case CTX_KENTRY:
 		/* Kernel mode program counter */
-		k->lr = (uint32_t)&kernel_thread_entry;
-		k->r4 = (uint32_t)val;
+		k->ra = (uint32_t)&kernel_thread_entry;
+		k->s0 = (uint32_t)val;
 		break;
 
 	case CTX_KARG:
 		/* Kernel mode argument */
-		k->r5 = (uint32_t)val;
+		k->s1 = (uint32_t)val;
 		break;
-
+#if 0
 	case CTX_USTACK:
 		/* User mode stack pointer */
 		u = ctx->uregs;
@@ -113,13 +114,13 @@ context_set(context_t ctx, int type, register_t val)
 		u = ctx->uregs;
 		u->r0 = (uint32_t)val;		/* Argument 1 */
 		break;
-
+#endif
 	default:
 		/* invalid */
+		printf("TODO: context_set(): unimplemented type = %d\n", type);
+		panic("context_set, unimplemented context type\n");
 		break;
 	}
-#endif
-        panic("TODO: implement context_set()");
 }
 
 /*

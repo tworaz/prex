@@ -57,5 +57,5 @@ SECTIONS
 		*(COMMON)
 	}
 
-	/DISCARD/ : { *(.comment .pdr .note .debug_*) }
+	/DISCARD/ : { *(.comment .pdr .note) }
 }

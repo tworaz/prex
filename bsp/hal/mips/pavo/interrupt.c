@@ -41,6 +41,7 @@
 
 #include "platform.h"
 
+#define		NIRQS	32
 
 /*
  * Interrupt Priority Level
@@ -54,22 +55,9 @@ volatile int irq_level;
 /*
  * Interrupt mapping table
  */
-#if 0
-static int ipl_table[NIRQS];		/* vector -> level */
+static int 	ipl_table[NIRQS];	/* vector -> level */
 static uint32_t mask_table[NIPLS];	/* level -> mask */
-#endif
 
-/*
- * Clear pending
- */
-static void
-clear_pending(int vector)
-{
-#if 0
-	ICU_SRCPND = (1 << vector);
-	ICU_INTPND = (1 << vector);
-#endif
-}
 
 /*
  * Set mask for current ipl
@@ -77,9 +65,7 @@ clear_pending(int vector)
 static void
 update_mask(void)
 {
-#if 0
-	ICU_INTMSK = mask_table[irq_level];
-#endif
+	INTC_ICMR = mask_table[irq_level];
 }
 
 /*
@@ -90,7 +76,6 @@ update_mask(void)
 void
 interrupt_unmask(int vector, int level)
 {
-#if 0
 	int i;
 	uint32_t unmask = (uint32_t)~(1 << vector);
 
@@ -104,7 +89,6 @@ interrupt_unmask(int vector, int level)
 	for (i = 0; i < level; i++)
 		mask_table[i] &= unmask;
 
-#endif
 	update_mask();
 }
 
@@ -115,7 +99,6 @@ interrupt_unmask(int vector, int level)
 void
 interrupt_mask(int vector)
 {
-#if 0
 	int i, level;
 	uint32_t mask = (uint32_t)(1 << vector);
 
@@ -129,7 +112,6 @@ interrupt_mask(int vector)
 		mask_table[i] |= mask;
 	ipl_table[vector] = IPL_NONE;
 
-#endif
 	update_mask();
 }
 
@@ -192,6 +174,7 @@ interrupt_handler(void)
 out:
 	return;
 #endif
+	panic("TODO: implement interrupt_handler");
 }
 
 /*
@@ -201,24 +184,21 @@ out:
 void
 interrupt_init(void)
 {
-#if 0
 	int i;
 
 	irq_level = IPL_NONE;
 
+	/* Enable ICU clock */
+	/* CPM_CLKGR &= ~(1 << CPM_CLKGR_ICU);*/
+
 	/* Mask all interrupts */
-	ICU_INTMSK = 0xFFFFFFFF;
-	ICU_SUBINTMSK = 0xFFFFFFFF;
+	INTC_ICMSR = 0xFFFFFFFF;
 
 	for (i = 0; i < NIRQS; i++) {
 		ipl_table[i] = IPL_NONE;
-		clear_pending(i);
-		/* clear all sub pending */
-		ICU_SUBSRCPND = 0x0000ffff;
 	}
 
 	for (i = 0; i < NIPLS; i++)
 		mask_table[i] = 0xFFFFFFFF;
-#endif
 }
 

@@ -5,6 +5,7 @@ SRCS:=	        mips/arch/locore.S \
                 mips/arch/cpu.c \
                 mips/arch/trap.c \
                 mips/arch/context.c \
+                mips/arch/spl.c \
                 mips/pavo/interrupt.c \
                 mips/pavo/clock.c \
                 mips/pavo/machdep.c
