@@ -41,3 +41,9 @@ cpu_init(void)
 {
 
 }
+
+void
+cpu_idle(void)
+{
+	__asm("wait");
+}

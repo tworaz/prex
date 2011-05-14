@@ -50,8 +50,8 @@
  * Loader entry point
  */
 ENTRY(boot_entry)
-        bal	1f
-        li	k0, 0x1 /* 1 can come in handy */
+	bal	1f
+	li	k0, 0x1 /* 1 can come in handy */
 1:
 	/* Disable interrupts */
 	li	t0, 0x0000FC00
@@ -59,97 +59,97 @@ ENTRY(boot_entry)
 	li	t1, 0x00800000
 	mtc0	t1, COP_0_CAUSE
 
-        /* Make kseg0 uncachable */
-        mfc0	t3, COP_0_CONFIG
-        li	t4, 0xfffffff8
-        and	t3, t3, t4
-        ori	t3, 0x2
-        mtc0	t3, COP_0_CONFIG
+	/* Make kseg0 uncachable */
+	mfc0	t3, COP_0_CONFIG
+	li	t4, 0xfffffff8
+	and	t3, t3, t4
+	ori	t3, 0x2
+	mtc0	t3, COP_0_CONFIG
 
-        /* Setup sp and gp */
-        li	sp, BOOTSTK
+	/* Setup sp and gp */
+	li	sp, BOOTSTKTOP
 	la	gp, _gp
 
-        /* Get D-cache params */
-        mfc0	t9, COP_0_CONFIG, 1
+	/* Get D-cache params */
+	mfc0	t9, COP_0_CONFIG, 1
 	nop
-        srl	t9, t9, 7
-        andi	t0, t9, 0x7  /* DA */
-        srl	t9, t9, 3
-        andi	t1, t9, 0x7  /* DL */
-        beq	t1, zero, 4f /* Assumption: No D-cache == No I-cache */
-        srl	t9, t9, 3
-        andi	t2, t9, 0x7  /* DS */
+	srl	t9, t9, 7
+	andi	t0, t9, 0x7  /* DA */
+	srl	t9, t9, 3
+	andi	t1, t9, 0x7  /* DL */
+	beq	t1, zero, 4f /* Assumption: No D-cache == No I-cache */
+	srl	t9, t9, 3
+	andi	t2, t9, 0x7  /* DS */
 
-        addiu	t0, t0, 1  /* D-cache Assciativity */
-        addiu	t1, t1, 1
-        addiu	t2, t2, 6
-        sllv	s0, k0, t1 /* D-cache line size */
-        addu	t8, t1, t2
+	addiu	t0, t0, 1  /* D-cache Assciativity */
+	addiu	t1, t1, 1
+	addiu	t2, t2, 6
+	sllv	s0, k0, t1 /* D-cache line size */
+	addu	t8, t1, t2
 	sllv	s1, k0, t8
-        multu	s1, t0
+	multu	s1, t0
 
-        /* Get I-cache params */
-        srl	t9, t9, 3
-        andi	t0, t9, 0x7 /* IA */
-        srl	t9, t9, 3
-        andi	t1, t9, 0x7 /* IL */
-        srl	t9, t9, 3
-        andi	t2, t9, 0x7 /* IS */
+	/* Get I-cache params */
+	srl	t9, t9, 3
+	andi	t0, t9, 0x7 /* IA */
+	srl	t9, t9, 3
+	andi	t1, t9, 0x7 /* IL */
+	srl	t9, t9, 3
+	andi	t2, t9, 0x7 /* IS */
 
-        addiu	t0, t0, 1  /* I-cache Assciativity */
-        addiu	t1, t1, 1
-        addiu	t2, t2, 6
-        sllv	s2, k0, t1 /* I-cache line size */
-        addu	t8, t1, t2
+	addiu	t0, t0, 1  /* I-cache Assciativity */
+	addiu	t1, t1, 1
+	addiu	t2, t2, 6
+	sllv	s2, k0, t1 /* I-cache line size */
+	addu	t8, t1, t2
 	sllv	s3, k0, t8
-        mflo	s1         /* D-cache size */
-        multu	s3, t0
-        mflo	s3         /* I-cache size */
+	mflo	s1         /* D-cache size */
+	multu	s3, t0
+	mflo	s3         /* I-cache size */
 
 	/* Flush caches */
-        li	t0, MIPS_KSEG1
-        add	t1, t0, s3
-        or	t2, t0, t0
-        add	t3, t2, s1
+	li	t0, MIPS_KSEG1
+	add	t1, t0, s3
+	or	t2, t0, t0
+	add	t3, t2, s1
 2:	/* I-cache */
 	cache	Index_Invalidate_I, 0(t0)
-        bne	t0, t1, 2b
-        addu	t0, t0, s2
+	bne	t0, t1, 2b
+	addu	t0, t0, s2
 3:	/* D-cache */
 	cache	Index_Writeback_Inv_D, 0(t2)
-        bne	t2, t3, 3b
-        addu	t2, t2, s0
+	bne	t2, t3, 3b
+	addu	t2, t2, s0
 4:
-        /* Copy prex image to proper location if not already there */
-        addiu	a0, ra, -8 /* ra holds real boot_entry addr + 8 */
-        li	a1, CONFIG_LOADER_TEXT
-        lui	a2, 0x800A /* FIXME: real image size not 640K */
-        la	t0, main
-        subu	t1, t0, a0
-        bne	a0, a1, copy_image
-        addu	a3, a1, t1
+	/* Copy prex image to proper location if not already there */
+	addiu	a0, ra, -8 /* ra holds real boot_entry addr + 8 */
+	li	a1, CONFIG_LOADER_TEXT
+	lui	a2, 0x800A /* FIXME: real image size not 640K */
+	la	t0, main
+	subu	t1, t0, a0
+	bne	a0, a1, copy_image
+	addu	a3, a1, t1
 
 	/* Jump to main */
 	j	main
 	nop
 
-        /* 
-         * a0 - start of the image in memory
-         * a1 - destination
-         * a2 - end of image
-         * a3 - address to jump to after relocation
-         */
+	/*
+	 * a0 - start of the image in memory
+	 * a1 - destination
+	 * a2 - end of image
+	 * a3 - address to jump to after relocation
+	 */
 copy_image:
-        lw	t9, 0(a0)
-        addiu	a0, a0, 4
-        sw	t9, 0(a1)
-        bne	a1, a2, copy_image
-        addiu	a1, a1, 4
+	lw	t9, 0(a0)
+	addiu	a0, a0, 4
+	sw	t9, 0(a1)
+	bne	a1, a2, copy_image
+	addiu	a1, a1, 4
 
-        /* Jump to real main */
-        jr	a3
-        nop
+	/* Jump to real main */
+	jr	a3
+	nop
 
 	.section .tail,"ax"
 dummy:

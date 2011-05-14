@@ -63,46 +63,39 @@ clock_init(void)
 	uint16_t tmp16;
 
 	/* Enable TCU clock */
-	CPM_CLKGR &= ~(1 << CPM_CLKGR_TCU);
+	JZ_CPM_CLK_GATE &= ~(1 << JZ_CPM_CLK_GATE_TCU);
 
 	/* Stop counter 0 */
-	TCU_TECR = (1 << 0);
+	JZ_TCU_ENABLE_CLEAR = (1 << 0);
 
+	tmp16  = JZ_TCU_CONTROL(0);
 	/* Select EXTAL as the timer clock input */
-	tmp16  = TCU_TCSR0;
-	tmp16 &= ~(TCU_TCSR_EXT_EN | TCU_TCSR_RTC_EN | TCU_TCSR_PCK_EN);
-	tmp16 |= TCU_TCSR_EXT_EN;
-	/* TCU_TCSR0 = tmp16; */
-
+	tmp16 &= ~(JZ_TCU_CONTROL_EXT_EN | JZ_TCU_CONTROL_RTC_EN |
+	           JZ_TCU_CONTROL_PCK_EN | JZ_TCU_CONTROL_PWM_EN);
+	tmp16 |= JZ_TCU_CONTROL_EXT_EN;
 	/* Set Prescale CLK/4 */
-	/* tmp16  = TCU_TCSR0; */
-	tmp16 &= ~(TCU_TCSR_PRESCALE_MASK);
-	tmp16 |= (1 << TCU_TCSR_PRESCALE_BIT);
-	/* TCU_TCSR0 = tmp16; */
-
-	/* Disable PWM output */
-	/* tmp16  = TCU_TCSR0; */
-	tmp16 &= ~(TCU_TCSR_PWM_EN);
-	TCU_TCSR0 = tmp16;
+	tmp16 &= ~(JZ_TCU_CONTROL_PRESCALE_MASK);
+	tmp16 |= (1 << JZ_TCU_CONTROL_PRESCALE_BIT);
+	JZ_TCU_CONTROL(0) = tmp16;
 
 	/* Set full data */
-	TCU_TDFR0 = CONFIG_JZ_EXTAL / HZ / 4;
-
+	JZ_TCU_DATA_FULL(0) = CONFIG_JZ_EXTAL / HZ / 4;
 	/* Mask half-match IRQ */
-	TCU_TMSR = (1 << 16);
-	/* Clear full match flag */
-	TCU_TFCR = (1 << 0);
+	JZ_TCU_MASK_SET = (1 << 16);
 	/* Unmask full-match IRQ */
-	TCU_TMCR = (1 << 0);
-	/* Clear TCNT */
-	TCU_TCNT0 = 0;
+	JZ_TCU_MASK_CLEAR = (1 << 0);
+	/* Clear full match flag */
+	JZ_TCU_FLAG_CLEAR = (1 << 0);
+	/* Clear counter value */
+	JZ_TCU_COUNT(0) = 0;
 
 	/* Install ISR */
-	clock_irq = irq_attach(IRQ_TCU0, IPL_CLOCK, 0, &clock_isr,
+	clock_irq = irq_attach(JZ_IRQ_TCU0, IPL_CLOCK, 0, &clock_isr,
 			       IST_NONE, NULL);
 	ASSERT(clock_irq != NULL);
 
-	TCU_TESR = (1 << 0);
+	/* Enable timer */
+	JZ_TCU_ENABLE_SET = (1 << 0);
 
 	DPRINTF(("Clock rate: %d ticks/sec\n", CONFIG_HZ));
 }

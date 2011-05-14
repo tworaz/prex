@@ -27,6 +27,7 @@
  * SUCH DAMAGE.
  */
 
+#include <cpufunc.h>
 #include <hal.h>
 
 /* Highest SPL level */
@@ -35,18 +36,14 @@
 /* Start with interrupts disabled */
 int curspl = SPL_HIGH;
 
-/* Forward declarations */
-void irq_off(void);
-void irq_on(void);
-
 int spl_set(int newspl)
 {
 	int oldspl;
 
 	if (newspl > 0) {
-		irq_off();
+		irq_disable();
 	} else if (newspl == 0) {
-		irq_on();
+		irq_enable();
 	}
 
 	oldspl = curspl;

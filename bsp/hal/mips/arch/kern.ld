@@ -30,7 +30,6 @@ SECTIONS
 		*(.vector.180);
 		. = 0x200;
 		*(.vector.200);
-		*(.vector);
 		_vector_end = .;
 	} :text
 

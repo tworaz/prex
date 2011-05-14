@@ -35,21 +35,20 @@
  * syspage layout:
  *
  * +------------------+ CONFIG_SYSPAGE_BASE
- * | Vector page      |
- * |                  |
+ * | Exception page   |
+ * +------------------+ +0x0400
+ * | Boot information |
+ * +------------------+ +0x0800
+ * | Boot stack       |
  * +------------------+ +0x1000
+ * |                  |
  * | Interrupt stack  |
  * |                  |
- * +------------------+ +0x2000
- * | Sys mode stack   |
- * |                  |
  * +------------------+ +0x3000
- * | Boot information |
- * +------------------+ +0x3400
- * | Abort mode stack |
- * +------------------+ +0x3800
- * | Boot stack       |
- * +------------------+ +0x4000
+ * |                  |
+ * |  Sys mode stack  |
+ * |                  |
+ * +------------------+ +0x5000
  * | PGD for boot     |
  * | (MMU only)       |
  * |                  |
@@ -60,44 +59,35 @@
  * | PTE1 for UART I/O|
  * | (MMU only)       |
  * +------------------+ +0xA000
-
- *
- * Note1: Kernel PGD must be stored at 16k aligned address.
- *
- * Note2: PTE0 must be stored at 4k aligned address.
- *
- * Note2: Interrupt stack should be placed after NULL page
- * to detect the stack overflow.
  */
 
 #define SYSPAGE		CONFIG_SYSPAGE_BASE
+#define BOOTINFO	(SYSPAGE + 0x0400)
+#define BOOTSTK		(SYSPAGE + 0x0800)
 #define INTSTK		(SYSPAGE + 0x1000)
-#define SYSSTK		(SYSPAGE + 0x2000)
-#define BOOTINFO	(SYSPAGE + 0x3000)
-#define ABTSTK		(SYSPAGE + 0x3400)
-#define BOOTSTK		(SYSPAGE + 0x3800)
-#define BOOT_PGD	(SYSPAGE + 0x4000)
-#define BOOT_PTE0	(SYSPAGE + 0x8000)
-#define BOOT_PTE1	(SYSPAGE + 0x9000)
+#define SYSSTK		(SYSPAGE + 0x3000)
+#define BOOT_PGD	(SYSPAGE + 0x5000)
+#define BOOT_PTE0	(SYSPAGE + 0xB000)
+#define BOOT_PTE1	(SYSPAGE + 0xC000)
 
+#if 0
 #define BOOT_PGD_PHYS	0x4000
 #define BOOT_PTE0_PHYS	0x8000
 #define BOOT_PTE1_PHYS	0x9000
+#endif
 
-#define INTSTKSZ	0x1000
-#define SYSSTKSZ	0x1000
-#define ABTSTKSZ	0x400
-#define BOOTSTKSZ	0x800
+#define INTSTKSZ	0x2000
+#define SYSSTKSZ	0x2000
+#define BOOTSTKSZ	0x0800
 
-#define INTSTKTOP	(INTSTK + INTSTKSZ)
-#define SYSSTKTOP	(SYSSTK + SYSSTKSZ)
-#define ABTSTKTOP	(ABTSTK + ABTSTKSZ)
+#define INTSTKTOP	(INTSTK  + INTSTKSZ)
+#define SYSSTKTOP	(SYSSTK  + SYSSTKSZ)
 #define BOOTSTKTOP	(BOOTSTK + BOOTSTKSZ)
 
 #ifdef CONFIG_MMU
 #define SYSPAGESZ	0xA000
 #else
-#define SYSPAGESZ	0x4000
+#define SYSPAGESZ	0x5000
 #endif
 
 

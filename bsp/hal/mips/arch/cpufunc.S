@@ -37,37 +37,25 @@
 
 	.section ".text","ax"
 	.set noreorder
-	.set mips32
-
-/*
- * Sit idle doing nothing until some interrupt arrives
- */
-ENTRY(cpu_idle)
-	wait
-	jr	ra
-	nop
-
-/*
- * Disable interrupts by clearing IE bit in SR
- */
-ENTRY(irq_off)
-	mfc0	t0, COP_0_STATUS
-	nop
-	and	t0, t0, ~0x1
-	mtc0	t0, COP_0_STATUS
-	jr	ra
-	nop
 
 /*
  * Enable interrupts by setting IE bit in SR
  */
-ENTRY(irq_on)
+ENTRY(irq_enable)
 	mfc0	t0, COP_0_STATUS
 	nop
 	or	t0, t0, 0x1
-	mtc0	t0, COP_0_STATUS
 	jr	ra
+	mtc0	t0, COP_0_STATUS
+
+/*
+ * Disable interrupts by clearing IE bit in SR
+ */
+ENTRY(irq_disable)
+	mfc0	t0, COP_0_STATUS
 	nop
+	and	t0, t0, ~0x1
+	jr	ra
+	mtc0	t0, COP_0_STATUS
 
 	.set reorder
-	.set mips0

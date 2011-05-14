@@ -33,7 +33,8 @@
 #ifndef __ASSEMBLY__
 
 __BEGIN_DECLS
-void	 cpu_init(void);
+void	cpu_init(void);
+void	cpu_idle(void);
 __END_DECLS
 
 #endif /* !__ASSEMBLY__ */

@@ -80,41 +80,41 @@
  * dependent on this register format.
  */
 struct cpu_regs {
-/*	uint32_t	zero; */
-	uint32_t	at;	/*   +0 (00) */
-	uint32_t	v0;	/*   +4 (04) */
-	uint32_t	v1;	/*   +8 (08) */
-	uint32_t	a0;	/*  +12 (0C) */
-	uint32_t	a1;	/*  +16 (10) */
-	uint32_t	a2;	/*  +20 (14) */
-	uint32_t	a3;	/*  +24 (18) */
-	uint32_t	t0;	/*  +28 (1C) */
-	uint32_t	t1;	/*  +32 (20) */
-	uint32_t	t2;	/*  +36 (24) */
-	uint32_t	t3;	/*  +40 (28) */
-	uint32_t	t4; 	/*  +44 (2C) */
-	uint32_t	t5;	/*  +48 (30) */
-	uint32_t	t6;	/*  +52 (34) */
-	uint32_t	t7;	/*  +56 (38) */
-	uint32_t	s0;	/*  +60 (3C) */
-	uint32_t	s1;	/*  +64 (40) */
-	uint32_t	s2;	/*  +68 (44) */
-	uint32_t	s3;	/*  +72 (48) */
-	uint32_t	s4;	/*  +76 (4C) */
-	uint32_t	s5;	/*  +80 (50) */
-	uint32_t	s6;	/*  +84 (54) */
-	uint32_t	s7;	/*  +88 (58) */
-	uint32_t	t8;	/*  +92 (5C) */
-	uint32_t	t9;	/*  +96 (60) */
-/*	uint32_t	ko; */
-/*	uint32_t	k1; */
-	uint32_t	gp;	/* +100 (64) */
-	uint32_t	sp;	/* +104 (68) */
-	uint32_t	fp;	/* +108 (6C) */
-	uint32_t	ra;	/* +112 (70) */
-	uint32_t	cause;  /* +116 (74) */
-	uint32_t	epc;	/* +120 (78) */
-	uint32_t	sr;	/* +124 (7C) */
+	uint32_t	epc;	/*   +0 (00) */
+	uint32_t	vaddr;  /*   +4 (04) */
+	uint32_t	status; /*   +8 (08) */
+	uint32_t	cause;  /*  +12 (0C) */
+	uint32_t	lo;     /*  +16 (10) */
+	uint32_t	hi;     /*  +20 (14) */
+	uint32_t	at;     /*  +24 (18) */
+	uint32_t	v0;     /*  +28 (1C) */
+	uint32_t	v1;     /*  +32 (20) */
+	uint32_t	a0;     /*  +36 (24) */
+	uint32_t	a1;     /*  +40 (28) */
+	uint32_t	a2;     /*  +44 (2C) */
+	uint32_t	a3;     /*  +48 (30) */
+	uint32_t	t0;     /*  +52 (34) */
+	uint32_t	t1;     /*  +56 (38) */
+	uint32_t	t2;     /*  +60 (3C) */
+	uint32_t	t3;     /*  +64 (40) */
+	uint32_t	t4;     /*  +68 (44) */
+	uint32_t	t5;     /*  +72 (48) */
+	uint32_t	t6;     /*  +76 (4C) */
+	uint32_t	t7;     /*  +80 (50) */
+	uint32_t	s0;     /*  +84 (54) */
+	uint32_t	s1;     /*  +88 (58) */
+	uint32_t	s2;     /*  +92 (5C) */
+	uint32_t	s3;     /*  +96 (60) */
+	uint32_t	s4;     /* +100 (64) */
+	uint32_t	s5;     /* +104 (68) */
+	uint32_t	s6;     /* +108 (6C) */
+	uint32_t	s7;     /* +112 (70) */
+	uint32_t	t8;     /* +116 (74) */
+	uint32_t	t9;     /* +120 (78) */
+	uint32_t	gp;     /* +124 (7C) */
+	uint32_t	sp;     /* +128 (80) */
+	uint32_t	s8;     /* +132 (84) */
+	uint32_t	ra;	/* +136 (88) */
 };
 
 /*
@@ -131,7 +131,7 @@ struct kern_regs {
 	uint32_t	s7;
 	uint32_t	gp;
 	uint32_t	sp;
-	uint32_t	fp;
+	uint32_t	s8;
 	uint32_t	ra;
 };
 
@@ -151,39 +151,147 @@ typedef struct context *context_t;	/* context id */
 /*
  * Register offset in cpu_regs
  */
-#define REG_AT		0x00
-#define REG_V0		0x04
-#define REG_V1		0x08
-#define REG_A0		0x0C
-#define REG_A1		0x10
-#define REG_A2		0x14
-#define REG_A3		0x18
-#define REG_T0		0x1C
-#define REG_T1		0x20
-#define REG_T2		0x24
-#define REG_T3		0x28
-#define REG_T4		0x2C
-#define REG_T5		0x30
-#define REG_T6		0x34
-#define REG_T7		0x38
-#define REG_S0		0x3C
-#define REG_S1		0x40
-#define REG_S2		0x44
-#define REG_S3		0x48
-#define REG_S4		0x4C
-#define REG_S5		0x50
-#define REG_S6		0x54
-#define REG_S7		0x58
-#define REG_T8		0x5C
-#define REG_T9		0x60
-#define REG_GP		0x64
-#define REG_SP		0x68
-#define REG_FP		0x6C
-#define REG_RA		0x70
-#define REG_CAUSE	0x74
-#define REG_EPC		0x78
-#define REG_SR		0x7c
+#define	CTX_EPC     0
+#define	CTX_VADDR   4
+#define	CTX_STATUS  8
+#define	CTX_CAUSE  12
+#define	CTX_LO     16
+#define	CTX_HI     20
+#define	CTX_AT     24
+#define	CTX_V0     28
+#define	CTX_V1     32
+#define	CTX_A0     36
+#define	CTX_A1     40
+#define	CTX_A2     44
+#define	CTX_A3     48
+#define	CTX_T0     52
+#define	CTX_T1     56
+#define	CTX_T2     60
+#define	CTX_T3     64
+#define	CTX_T4     68
+#define	CTX_T5     72
+#define	CTX_T6     76
+#define	CTX_T7     80
+#define	CTX_S0     84
+#define	CTX_S1     88
+#define	CTX_S2     92
+#define	CTX_S3     96
+#define	CTX_S4    100
+#define	CTX_S5    104
+#define	CTX_S6    108
+#define	CTX_S7    112
+#define	CTX_T8    116
+#define	CTX_T9    120
+#define	CTX_GP    124
+#define	CTX_SP    128
+#define	CTX_S8    132
+#define	CTX_RA    136
 
-#define CTXREGS		(4*32)
+#define CTXREGS	  (4*35)
+
+#ifdef __ASSEMBLY__
+
+/* 
+ * Macro to store struct cpu_regs on the stack
+ * k0 = stack pointer to actualy save
+ */
+.macro EXCEPTION_SAVE_CTX
+	.set push
+	.set noat
+	.set reorder
+	sub	sp, sp, CTXREGS
+	sw	ra, CTX_RA(sp)
+	sw	s8, CTX_S8(sp)
+	sw	k0, CTX_SP(sp)
+	sw	gp, CTX_GP(sp)
+	sw	t9, CTX_T9(sp)
+	sw	t8, CTX_T8(sp)
+	sw	s7, CTX_S7(sp)
+	sw	s6, CTX_S6(sp)
+	sw	s5, CTX_S5(sp)
+	sw	s4, CTX_S4(sp)
+	sw	s3, CTX_S3(sp)
+	sw	s2, CTX_S2(sp)
+	sw	s1, CTX_S1(sp)
+	sw	s0, CTX_S0(sp)
+	sw	t7, CTX_T7(sp)
+	sw	t6, CTX_T6(sp)
+	sw	t5, CTX_T5(sp)
+	sw	t4, CTX_T4(sp)
+	sw	t3, CTX_T3(sp)
+	sw	t2, CTX_T2(sp)
+	sw	t1, CTX_T1(sp)
+	sw	t0, CTX_T0(sp)
+	sw	a3, CTX_A3(sp)
+	sw	a2, CTX_A2(sp)
+	sw	a1, CTX_A1(sp)
+	sw	a0, CTX_A0(sp)
+	sw	v1, CTX_V1(sp)
+	sw	v0, CTX_V0(sp)
+	sw	AT, CTX_AT(sp)
+	mfhi	t0
+	mflo	t1
+	sw	t0, CTX_HI(sp)
+	sw	t1, CTX_LO(sp)
+	mfc0	t2, COP_0_CAUSE	
+	sw	t2, CTX_CAUSE(sp)
+	mfc0	t3, COP_0_STATUS
+	sw	t3, CTX_STATUS(sp)
+	mfc0	t4, COP_0_BADVADDR
+	sw	t4, CTX_VADDR(sp)
+	mfc0	t5, COP_0_EPC
+	sw	t5, CTX_EPC(sp)
+	.set pop
+.endm
+
+/*
+ * Macro to restore struct cpu_regs from the stack
+ */
+.macro EXCEPTION_RESTORE_CTX
+	.set push
+	.set noat
+	.set reorder
+	lw	t0, CTX_EPC(sp)
+	lw	t1, CTX_STATUS(sp)
+	lw	t2, CTX_LO(sp)
+	lw	t3, CTX_HI(sp)
+	mtc0	t0, COP_0_EPC
+	mtlo	t2
+	mtc0	t1, COP_0_STATUS
+	mthi	t3
+	/* No need to restore BADVADDR and CAUSE */
+	lw	AT, CTX_AT(sp)
+	lw	v0, CTX_V0(sp)
+	lw	v1, CTX_V1(sp)
+	lw	a0, CTX_A0(sp)
+	lw	a1, CTX_A1(sp)
+	lw	a2, CTX_A2(sp)
+	lw	a3, CTX_A3(sp)
+	lw	t0, CTX_T0(sp)
+	lw	t1, CTX_T1(sp)
+	lw	t2, CTX_T2(sp)
+	lw	t3, CTX_T3(sp)
+	lw	t4, CTX_T4(sp)
+	lw	t5, CTX_T5(sp)
+	lw	t6, CTX_T6(sp)
+	lw	t7, CTX_T7(sp)
+	lw	s0, CTX_S0(sp)
+	lw	s1, CTX_S1(sp)
+	lw	s2, CTX_S2(sp)
+	lw	s3, CTX_S3(sp)
+	lw	s4, CTX_S4(sp)
+	lw	s5, CTX_S5(sp)
+	lw	s6, CTX_S6(sp)
+	lw	s7, CTX_S7(sp)
+	lw	t8, CTX_T8(sp)
+	lw	t9, CTX_T9(sp)
+	lw	gp, CTX_GP(sp)
+	lw	s8, CTX_S8(sp)
+	lw	ra, CTX_RA(sp)
+	/* Stack goes last */
+	lw	sp, CTX_SP(sp)
+	.set pop
+.endm
+#endif /* __ASSEMBLY */
 
 #endif /* !_MIPS_CONTEXT_H */

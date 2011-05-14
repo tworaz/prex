@@ -15,7 +15,7 @@ makeoptions	LDFLAGS+= -EL
 memory		LOADER_TEXT	0x80600000	# Start of boot loader
 memory		KERNEL_TEXT	0x80010000	# Start of kernel
 memory		BOOTIMG_BASE	0x80602000	# Location of boot image
-memory		SYSPAGE_BASE	0x80004000	# Location of system page
+memory		SYSPAGE_BASE	0x80000000	# Location of system page
 
 #
 # Tunable paramters
@@ -26,7 +26,7 @@ options 	OPEN_MAX=16	    # Max open files per process
 options 	BUF_CACHE=32	    # Blocks for buffer cache
 options 	FS_THREADS=4	    # Number of file system threads
 
-options	        RAM_SIZE=0x04000000 # Size of RAM memory
+options	        RAM_SIZE=0x04000000 # 64MB of RAM memory
 options 	JZ_EXTAL=12000000   # 12 MHz
 
 #

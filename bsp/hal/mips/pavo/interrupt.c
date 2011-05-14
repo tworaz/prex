@@ -60,12 +60,21 @@ static uint32_t mask_table[NIPLS];	/* level -> mask */
 
 
 /*
+ * Clear pending
+ */
+static void
+clear_pending(int vector)
+{
+	JZ_INTC_PENDING = (1 << vector);
+}
+
+/*
  * Set mask for current ipl
  */
 static void
 update_mask(void)
 {
-	INTC_ICMR = mask_table[irq_level];
+	JZ_INTC_MASK = mask_table[irq_level];
 }
 
 /*
@@ -131,12 +140,11 @@ interrupt_setup(int vector, int mode)
 void
 interrupt_handler(void)
 {
-#if 0
 	uint32_t bits;
 	int vector, old_ipl, new_ipl;
 
 	/* Get interrupt source */
-	bits = ICU_INTPND;
+	bits = JZ_INTC_PENDING;
 	for (vector = 0; vector < NIRQS; vector++) {
 		if (bits & (uint32_t)(1 << vector))
 			break;
@@ -160,21 +168,18 @@ interrupt_handler(void)
 	update_mask();
 
 	/* Allow another interrupt that has higher priority */
-	splon();
+	irq_enable();
 
 	/* Dispatch interrupt */
-	/* Allow another interrupt that has higher priority */
 	irq_handler(vector);
 
-	sploff();
+	irq_disable();
 
 	/* Restore interrupt level */
 	irq_level = old_ipl;
 	update_mask();
 out:
 	return;
-#endif
-	panic("TODO: implement interrupt_handler");
 }
 
 /*
@@ -189,7 +194,7 @@ interrupt_init(void)
 	irq_level = IPL_NONE;
 
 	/* Mask all interrupts */
-	INTC_ICMSR = 0xFFFFFFFF;
+	JZ_INTC_MASK_SET = 0xFFFFFFFF;
 
 	for (i = 0; i < NIRQS; i++) {
 		ipl_table[i] = IPL_NONE;
@@ -197,5 +202,8 @@ interrupt_init(void)
 
 	for (i = 0; i < NIPLS; i++)
 		mask_table[i] = 0xFFFFFFFF;
+
+	/* Clear all pending interrupts */
+	JZ_INTC_PENDING = 0xFFFFFFFF;
 }
 

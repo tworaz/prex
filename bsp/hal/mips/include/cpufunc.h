@@ -34,7 +34,9 @@
 #include <sys/types.h>
 
 __BEGIN_DECLS
-void	 cpu_idle(void);
+void	irq_enable(void);
+void	irq_disable(void);
+#if 0
 int	 get_faultstatus(void);
 void	*get_faultaddress(void);
 paddr_t	 get_ttb(void);
@@ -42,6 +44,7 @@ void	 set_ttb(paddr_t);
 void	 switch_ttb(paddr_t);
 void	 flush_tlb(void);
 void	 flush_cache(void);
+#endif
 __END_DECLS
 
 #endif /* !_MIPS_CPUFUNC_H */

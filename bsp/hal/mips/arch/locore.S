@@ -55,7 +55,7 @@ ENTRY(kernel_start)
 	mtc0	t1, COP_0_CAUSE
 
 	/* Setup sp and gp */
-	li	sp, SYSSTK
+	li	sp, SYSSTKTOP
 	la	gp, _gp
 
 	/* Clear kernel BSS */
@@ -128,27 +128,24 @@ ENTRY(cpu_switch)
 	nop
 
 /*
- * TLB refill entry point
+ * Relocate exception vector
+ *
+ * void vector_copy(paddr_t dest);
  */
-ENTRY(tlb_refill_entry)
-	la	a0, tlb_rf_ent_todo
-	jal	panic
-	nop
+ENTRY(vector_copy)
+#if SYSPAGE != MIPS_KSEG0
+	mtc0	a0, COP_0_PRID, 1 /* EBase */
+#endif
+	la	t0, _vector_start
+	la	t1, _vector_end
+1:
+	lw	t3, 0(t0)
+	addiu	t0, t0, 4
+	sw	t3, 0(a0)
+	bne	t0, t1, 1b
+	addiu	a0, a0, 4
 
-/*
- * Cache error entry point
- */
-ENTRY(cache_error_entry)
-	la	a0, cache_err_todo
-	jal	panic
-	nop
-
-/*
- * Interrunt entry point
- */
-ENTRY(interrupt_entry)
-	la	a0, irq_ent_todo
-	jal	panic
+	jr	ra
 	nop
 
 /*
@@ -163,37 +160,79 @@ syscall_ret:
 	la	a0, syscall_ret_todo
 	jal	panic
 	nop
+/*
+ * Low level exception entry point.
+ */
+ENTRY(exception_entry)
+	la	a0, exc_ent_todo
+	jal	panic
+	nop
 
 /*
- * Relocate exception vector
- *
- * void vector_copy(paddr_t dest);
+ * Low level interrupt entry point.
  */
-ENTRY(vector_copy)
-	la	t0, _vector_start
-	la	t1, _vector_end
+ENTRY(interrupt_entry)
+	/* Increment irq nesting variable */
+	la	k0, irq_nesting
+	lw	k1, 0(k0)
+	nop
+	addiu	k1, k1, 1
+	sw	k1, 0(k0)
+
+	/* Set up interrupt stack if it wasn't done already */
+	sltiu	k0, k1, 2
+	beq	k0, zero, 1f
+	move	k0, sp /* Branch delay */
+	li	sp, INTSTKTOP
 1:
-	lw	t3, 0(t0)
-	addiu	t0, t0, 4
-	sw	t3, 0(a0)
-	bne	t0, t1, 1b
-	addiu	a0, a0, 4
-	jr	ra
+	/* Save context registers on the stack */
+	EXCEPTION_SAVE_CTX
+#if 0
+	addiu	s0, k1, -1 /* s0 == 0 if outermost irq */
+#endif
+	
+	jal	interrupt_handler
 	nop
 
-/*
- * Exception/Interrunt vectors
- */
+	/* Restore previous context */
+	EXCEPTION_RESTORE_CTX
+
+	la	k0, irq_nesting
+	lw	k1, 0(k0)
+	nop
+	addiu	k1, k1, -1
+	sw	k1, 0(k0)
+
+	/* Return to user mode */
+	eret
+
 	.section ".vector.000", "ax", %progbits
-	j	tlb_refill_entry
+/*
+ * TLB Refill exception handler
+ */
+	la	a0, tlb_rf_ent_todo
+	jal	panic
 	nop
+
 	.section ".vector.100", "ax", %progbits
-	j	cache_error_entry
+/*
+ * Cache error exception entry
+ */
+	la	a0, cache_err_todo
+	jal	panic
 	nop
+
 	.section ".vector.180", "ax", %progbits
-	j	interrupt_entry
+/*
+ * General exception handler.
+ */
+ 	j	exception_entry
 	nop
-	.section ".vector", "ax", %progbits
+
+	.section ".vector.200", "ax", %progbits
+/*
+ * Interrupt handler.
+ */
 	j	interrupt_entry
 	nop
 
@@ -206,6 +245,18 @@ copyinstr_todo:		.asciz "TODO: implement copyinstr\n"
 cpu_switch_todo:	.asciz "TODO: implement cpu_switch\n"
 tlb_rf_ent_todo:	.asciz "TODO: implement tlb_refill_entry\n"
 cache_err_todo:		.asciz "TODO: implement cache_error_entry\n"
-irq_ent_todo:		.asciz "TODO: implement interrupt_entry"
-syscall_ret_todo:	.asciz "TODO: implement syscal_reg\n"
+exc_ent_todo:		.asciz "TODO: implement exception_entry"
+syscall_ret_todo:	.asciz "TODO: implement syscal_ret\n"
 syscall_ent_todo:	.asciz "TODO: implement syscall_entry\n"
+
+/*
+ * Interrupt nest counter.
+ *
+ * This counter is incremented in the entry of interrupt handler
+ * to switch the interrupt stack. Since all interrupt handlers
+ * share same one interrupt stack, each handler must pay attention
+ * to the stack overflow.
+ */
+	.section ".bss"
+irq_nesting:
+	.long	0
