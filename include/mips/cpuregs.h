@@ -53,13 +53,6 @@
 
 #define	MIPS_PHYS_MASK			0x1fffffff
 
-#if 0
-#define	MIPS_KSEG0_TO_PHYS(x)	((uintptr_t)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG0(x)	((uintptr_t)(x) | MIPS_KSEG0_START)
-#define	MIPS_KSEG1_TO_PHYS(x)	((uintptr_t)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG1(x)	((uintptr_t)(x) | MIPS_KSEG1_START)
-#endif /* __ASSEMBLER__ */
-
 /*
  * Coprocessor 0 register names
  */
@@ -96,5 +89,70 @@
 #define COP_0_TAGHI 		$29
 #define COP_0_ERROREPC 		$30
 #define COP_0_DESAVE 		$31
+
+/*
+ * MIPS32 coprocessor 0 status register bits
+ */
+#define MIPS_STATUS_COP_USABILITY 0xf0000000
+#define MIPS_STATUS_RP            0x08000000
+#define MIPS_STATUS_FR            0x04000000
+#define MIPS_STATUS_RE            0x02000000
+#define MIPS_STATUS_MX            0x01000000
+#define MIPS_STATUS_PX            0x00800000
+#define MIPS_STATUS_BEV           0x00400000
+#define MIPS_STATUS_TS            0x00200000
+#define MIPS_STATUS_SR            0x00100000
+#define MIPS_STATUS_NMI           0x00080000
+#define MIPS_STATUS_INT_MASK      0x0000ff00
+#define MIPS_STATUS_KX            0x00000080
+#define MIPS_STATUS_SX            0x00000040
+#define MIPS_STATUS_UX            0x00000020
+#define MIPS_STATUS_KSU_MASK      0x00000018
+#define MIPS_STATUS_KSU_USER      0x00000010
+#define MIPS_STATUS_KSU_SUPER     0x00000008
+#define MIPS_STATUS_KSU_KERNEL    0x00000000
+#define MIPS_STATUS_ERL           0x00000004
+#define MIPS_STATUS_EXL           0x00000002
+#define MIPS_STATUS_INT_IE        0x00000001
+
+/*
+ * MIPS32 coprocessor 0 cause register bits
+ */
+#define	MIPS_CAUSE_BR_DELAY       0x80000000
+#define MIPS_CAUSE_TI             0x40000000
+#define MIPS_CAUSE_CE_MASK        0x30000000
+#define MIPS_CAUSE_DC             0x08000000
+#define MIPS_CAUSE_PCI            0x04000000
+#define MIPS_CAUSE_IV             0x00800000
+#define MIPS_CAUSE_WP             0x00400000
+#define MIPS_CAUSE_IP_MASK        0x0000ff00
+#define MIPS_CAUSE_EXC_CODE_MASK  0x0000007c
+#define MIPS_CAUSE_EXC_CODE_SHIFT 2
+
+/*
+ * MIPS32 exception codes
+ */
+#define MIPS_CAUSE_EXC_CODE_IRQ         0
+#define MIPS_CAUSE_EXC_CODE_MOD         1
+#define MIPS_CAUSE_EXC_CODE_TLBL        2
+#define MIPS_CAUSE_EXC_CODE_TLBS        3
+#define MIPS_CAUSE_EXC_CODE_ADEL        4
+#define MIPS_CAUSE_EXC_CODE_ADES        5
+#define MIPS_CAUSE_EXC_CODE_IBE         6
+#define MIPS_CAUSE_EXC_CODE_DBE         7
+#define MIPS_CAUSE_EXC_CODE_SYS         8
+#define MIPS_CAUSE_EXC_CODE_BP          9
+#define MIPS_CAUSE_EXC_CODE_RI         10
+#define MIPS_CAUSE_EXC_CODE_CPU        11
+#define MIPS_CAUSE_EXC_CODE_OV         12
+#define MIPS_CAUSE_EXC_CODE_TRAP       13
+#define MIPS_CAUSE_EXC_CODE_FPE        15
+#define MIPS_CAUSE_EXC_CODE_C2E        18
+#define MIPS_CAUSE_EXC_CODE_MDMX       22
+#define MIPS_CAUSE_EXC_CODE_WATCH      23
+#define MIPS_CAUSE_EXC_CODE_MCHECK     24
+#define MIPS_CAUSE_EXC_CODE_THREAD     25
+#define MIPS_CAUSE_EXC_CODE_DSP        26
+#define MIPS_CAUSE_EXC_CODE_CACHE_ERR  30
 
 #endif /* _MIPS_CPUREGS_H */

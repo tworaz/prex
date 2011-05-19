@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2005, Kohsuke Ohtani
+ * Copyright (c) 2011, Peter Tworek
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
  * crt0.S - C startup routine
  */
 
+#include <machine/asm.h>
+
 /**
  * Stack layout:
  *      argc            argument counter (integer)
@@ -49,9 +51,14 @@
 	.global _start
 	.set noreorder
 _start:
-/* TODO: get argc, argv, envp, clear frame pointer */
-	nop
-	j	__prex_main
-	nop
-	.set reorder
+	la	gp, _gp
 
+	lw	a0, 0(sp)
+	addiu	a1, sp, 4
+
+	addu	a2, a1, a0
+
+	j	__prex_main
+	addiu	sp, sp, -16
+
+	.set reorder

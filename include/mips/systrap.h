@@ -34,10 +34,11 @@
 
 
 #define SYSCALL0(name) \
-		.global name; .align; \
-name##: li v0, SYS_##name; \
-		syscall; \
-		jr	ra
+	.global name; .align; \
+name##: \
+	li v0, SYS_##name; \
+	syscall; \
+	jr	ra
 
 
 #define SYSCALL1(name) SYSCALL0(name)

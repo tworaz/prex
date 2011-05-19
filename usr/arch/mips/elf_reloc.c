@@ -65,7 +65,7 @@ relocate_rel(Elf32_Rel *rel, Elf32_Addr sym_val, char *target_sect)
 	}
 	return 0;
 #endif
-	syslog(LOG_ERR, "TODO: implement relocate_rel()");
+	sys_panic("TODO: implement relocate_rel()\n");
 	return -1;
 }
 

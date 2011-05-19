@@ -149,8 +149,10 @@ interrupt_handler(void)
 		if (bits & (uint32_t)(1 << vector))
 			break;
 	}
-	if (vector == NIRQS)
+
+	if (vector == NIRQS) {
 		goto out;
+	}
 
 	/*
 	 * Prex support nest interrupt, hence we have to clear the interrupt
@@ -206,4 +208,3 @@ interrupt_init(void)
 	/* Clear all pending interrupts */
 	JZ_INTC_PENDING = 0xFFFFFFFF;
 }
-

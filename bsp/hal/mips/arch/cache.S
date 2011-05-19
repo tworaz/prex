@@ -113,6 +113,7 @@ ENTRY(cache_init)
 	la	a0, cache_fail_str
 	jal	panic
 	nop
+END(cache_init)
 
 	.section ".data"
 	.set reorder

@@ -1,3 +1,4 @@
+
 /*-
  * Copyright (c) 2011, Peter Tworek
  * All rights reserved.
@@ -27,39 +28,15 @@
  * SUCH DAMAGE.
  */
 
-/*
- * cpufunc.S - MIPS specific CPU functions
- */
+#ifndef _MIPS_LOCORE_H
+#define _MIPS_LOCORE_H
 
-#include <conf/config.h>
-#include <machine/asm.h>
-#include <cpu.h>
+#include <sys/cdefs.h>
 
-	.section ".text","ax"
-	.set noreorder
+__BEGIN_DECLS
+void	known_fault1(void);
+void	known_fault2(void);
+void	known_fault3(void);
+__END_DECLS
 
-/*
- * Enable interrupts by setting IE bit in SR
- */
-ENTRY(irq_enable)
-	mfc0	t0, COP_0_STATUS
-	nop
-	or	t0, t0, MIPS_STATUS_INT_IE
-	mtc0	t0, COP_0_STATUS
-	jr	ra
-	ehb
-END(irq_enable)
-
-/*
- * Disable interrupts by clearing IE bit in SR
- */
-ENTRY(irq_disable)
-	mfc0	t0, COP_0_STATUS
-	nop
-	and	t0, t0, ~(MIPS_STATUS_INT_IE)
-	mtc0	t0, COP_0_STATUS
-	jr	ra
-	ehb
-END(irq_disable)
-
-	.set reorder
+#endif /* !_MIPS_LOCORE_H */

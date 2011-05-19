@@ -46,7 +46,7 @@
 #define USERLIMIT	MIPS_KSEG0	/* upper limit on user address space */
 #else
 #define PAGE_SIZE	1024		/* bytes per page */
-#define USERLIMIT	MIPS_KSER1	/* upper limit on user address space */
+#define USERLIMIT	MIPS_KSEG1	/* upper limit on user address space */
 #endif
 
 #endif	/* _MIPS_MEMORY_H */

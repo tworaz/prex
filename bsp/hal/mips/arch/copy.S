@@ -28,38 +28,100 @@
  */
 
 /*
- * cpufunc.S - MIPS specific CPU functions
+ * copy.S - MIPS specific copy routines
  */
 
 #include <conf/config.h>
+#include <sys/errno.h>
 #include <machine/asm.h>
-#include <cpu.h>
+#include <machine/memory.h>
 
 	.section ".text","ax"
 	.set noreorder
 
 /*
- * Enable interrupts by setting IE bit in SR
+ * Copy data from user to kernel space.
+ * Returns 0 on success, or EFAULT on page fault.
+ *
+ *  syntax - int copyin(const void *uaddr, void *kaddr, size_t len)
  */
-ENTRY(irq_enable)
-	mfc0	t0, COP_0_STATUS
+ENTRY(copyin)
+	li	t0, USERLIMIT
+	add	t1, a0, a2
+
+	blt	t1, t0, 1f
 	nop
-	or	t0, t0, MIPS_STATUS_INT_IE
-	mtc0	t0, COP_0_STATUS
-	jr	ra
-	ehb
-END(irq_enable)
+	j	ra
+	li	v0, EFAULT
+1:
+	lb	t3, 0(a0)
+known_fault1:
+	addiu	a2, a2, -1
+	sb	t3, 0(a1)
+	addiu	a0, a0, 1
+	bne	a2, zero, 1b
+	addiu	a1, a1, 1
+
+	j	ra
+	move	v0, zero
+END(copyin)
 
 /*
- * Disable interrupts by clearing IE bit in SR
+ * Copy data to user from kernel space.
+ * Returns 0 on success, or EFAULT on page fault.
+ *
+ *  syntax - int copyout(const void *kaddr, void *uaddr, size_t len)
  */
-ENTRY(irq_disable)
-	mfc0	t0, COP_0_STATUS
+ENTRY(copyout)
+	li	t0, USERLIMIT
+	add	t1, a1, a2
+
+	blt	t1, t0, 1f
 	nop
-	and	t0, t0, ~(MIPS_STATUS_INT_IE)
-	mtc0	t0, COP_0_STATUS
-	jr	ra
-	ehb
-END(irq_disable)
+	j	ra
+	li	v0, EFAULT
+1:
+	lb	t3, 0(a1)
+known_fault2:
+	addiu	a2, a2, -1
+	sb	t3, 0(a0)
+	addiu	a0, a0, 1
+	bne	a2, zero, 1b
+	addiu	a1, a1, 1
+
+	j	ra
+	move	v0, zero
+END(copyout)
+
+/*
+ * copyinstr - Copy string from user space.
+ * Returns 0 on success, or EFAULT on page fault, or ENAMETOOLONG.
+ *
+ *  syntax - int copyinstr(const char *uaddr, void *kaddr, size_t len);
+ */
+ENTRY(copyinstr)
+	li	t0, USERLIMIT
+	add	t1, a0, a2
+
+	blt	t1, t0, 1f
+	nop
+	j	ra
+	li	v0, EFAULT
+1:
+	lbu	t3, 0(a0)
+known_fault3:
+	addiu	a2, a2, -1
+	beq	t3, zero, 2f
+	sb	t3, 0(a1)
+	addiu	a0, a0, 1
+	bne	a2, zero, 1b
+	addiu	a1, a1, 1
+
+	j	ra
+	li	v0, ENAMETOOLONG
+2:
+	j	ra
+	move	v0, zero
+END(copyinstr)
 
 	.set reorder

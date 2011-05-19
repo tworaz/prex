@@ -34,8 +34,9 @@
  */
 #define STUB(index, func) .global func;\
 ENTRY(func) \
-        la	t0, dki_table	; \
-        lw	t1, 0(t0)	; \
-        lw	t0, (index*4)(t1) ;\
-        j	t0 ;\
-        nop
+	la	t0, dki_table; \
+	lw	t1, 0(t0); \
+	lw	t0, (index*4)(t1) ;\
+	j	t0;\
+	nop; \
+END(func)

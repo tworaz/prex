@@ -40,15 +40,23 @@
 
 #define _ALIGN_TEXT .align 0
 #define _ASM_TYPE_FUNCTION	@function
-#define _ENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
 
 #define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
+#define _ENTRY(x) \
+	.text; _ALIGN_TEXT; \
+	.globl _C_LABEL(x); \
+	.type _C_LABEL(x),_ASM_TYPE_FUNCTION; \
+	.ent _C_LABEL(x), 0; \
+	_C_LABEL(x):
+
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y));
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y));
+
+#define END(x) \
+	.end _C_LABEL(x)
 
 #if defined(PIC)
 #define	PIC_SYM(x,y)	x ## ( ## y ## )

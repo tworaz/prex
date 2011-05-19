@@ -35,8 +35,7 @@
 #include <machine/asm.h>
 #include <machine/syspage.h>
 #include <machine/memory.h>
-#include <sys/errno.h>
-#include <context.h>
+#include <locore.h>
 #include <trap.h>
 #include <cpu.h>
 
@@ -49,13 +48,14 @@
  */
 ENTRY(kernel_start)
 	/* Disable interrupts */
-	li	t0, 0x0000FC00
+	li	t0, MIPS_STATUS_INT_MASK
 	mtc0	t0, COP_0_STATUS
-	li	t1, 0x00800000
+
+	li	t1, MIPS_CAUSE_IV
 	mtc0	t1, COP_0_CAUSE
 
 	/* Setup sp and gp */
-	li	sp, SYSSTKTOP
+	li	sp, BOOTSTKTOP
 	la	gp, _gp
 
 	/* Clear kernel BSS */
@@ -66,9 +66,14 @@ ENTRY(kernel_start)
 	bne     t2, t3, 1b
 	addiu   t2, t2, 4
 
+	li	k1, SYSSTKTOP
+	la	k0, curkstack
+	sw	k1, 0(k0)
+
 	/* Jump to main */
 	j	main
-	nop
+	ehb	/* Just in case */
+END(kernel_start)
 
 /*
  * Entry point for kernel thread
@@ -80,39 +85,7 @@ ENTRY(kernel_thread_entry)
 1:
 	j	1b
 	nop
-
-/*
- * Copy data from user to kernel space.
- * Returns 0 on success, or EFAULT on page fault.
- *
- *  syntax - int copyin(const void *uaddr, void *kaddr, size_t len)
- */
-ENTRY(copyin)
-	la	a0, copyin_todo
-	jal	panic
-	nop
-
-/*
- * Copy data to user from kernel space.
- * Returns 0 on success, or EFAULT on page fault.
- *
- *  syntax - int copyout(const void *kaddr, void *uaddr, size_t len)
- */
-ENTRY(copyout)
-	la	a0, copyout_todo
-	jal	panic
-	nop
-
-/*
- * copyinstr - Copy string from user space.
- * Returns 0 on success, or EFAULT on page fault, or ENAMETOOLONG.
- *
- *  syntax - int copyinstr(const char *uaddr, void *kaddr, size_t len);
- */
-ENTRY(copyinstr)
-	la	a0, copyinstr_todo
-	jal	panic
-	nop
+END(kernel_thread_entry)
 
 /*
  * Switch register context.
@@ -123,9 +96,44 @@ ENTRY(copyinstr)
  *
  */
 ENTRY(cpu_switch)
-	la	a0, cpu_switch_todo
-	jal	panic
-	nop
+	/* Get current kstack pointer */
+	la	t0, curkstack
+	/* lw	t1, 0(t0) */
+
+	/* Save regs in prev */
+	sw	ra, KREG_RA(a0)
+	sw	sp, KREG_SP(a0)
+	sw	gp, KREG_GP(a0)
+	sw	s8, KREG_S8(a0)
+	sw	s7, KREG_S7(a0)
+	sw	s6, KREG_S6(a0)
+	sw	s5, KREG_S5(a0)
+	sw	s4, KREG_S4(a0)
+	sw	s3, KREG_S3(a0)
+	sw	s2, KREG_S2(a0)
+	sw	s1, KREG_S1(a0)
+	sw	s0, KREG_S0(a0)
+	/* sw	t1, KREG_KSTACK(a0) */
+
+	/* Load regs from next */
+	lw	t1, KREG_KSTACK(a1)
+	lw	ra, KREG_RA(a1)
+	lw	sp, KREG_SP(a1)
+	lw	gp, KREG_GP(a1)
+	lw	s8, KREG_S8(a1)
+	lw	s7, KREG_S7(a1)
+	lw	s6, KREG_S6(a1)
+	lw	s5, KREG_S5(a1)
+	lw	s4, KREG_S4(a1)
+	lw	s3, KREG_S3(a1)
+	lw	s2, KREG_S2(a1)
+	lw	s1, KREG_S1(a1)
+	lw	s0, KREG_S0(a1)
+
+	/* Jump to return address */
+	j	ra
+	sw	t1, 0(t0) /* Set new curkstack value */
+END(cpu_switch)
 
 /*
  * Relocate exception vector
@@ -147,29 +155,85 @@ ENTRY(vector_copy)
 
 	jr	ra
 	nop
+END(vector_copy)
 
-/*
- * System call entry
- */
-	.global syscall_ret
-ENTRY(syscall_entry)
-	la	a0, syscall_ent_todo
-	jal	panic
-        nop
-syscall_ret:
-	la	a0, syscall_ret_todo
-	jal	panic
-	nop
 /*
  * Low level exception entry point.
  */
 ENTRY(exception_entry)
-	la	a0, exc_ent_todo
-	jal	panic
+	mfc0	k0, COP_0_CAUSE
 	nop
+	and	k0, k0, MIPS_CAUSE_EXC_CODE_MASK
+	srl	k0, k0, MIPS_CAUSE_EXC_CODE_SHIFT
+	sub	k0, k0, MIPS_CAUSE_EXC_CODE_SYS
+
+	beq	k0, zero, syscall_entry
+	move	k0, sp
+
+	li	sp, SYSSTKTOP
+	CONTEXT_SAVE
+
+	move	a0, sp
+	jal	trap_handler
+	addiu	sp, sp, -16
+	addiu	sp, sp, 16
+
+	/* Restore previous context */
+	CONTEXT_RESTORE
+
+	/* Return to user mode */
+	eret
+END(exception_entry)
 
 /*
- * Low level interrupt entry point.
+ * Low level syscall entry point
+ */
+	.global syscall_ret
+ENTRY(syscall_entry)
+	/* Set sp to current thread kstack */
+	la	k0, curkstack
+	lw	k1, 0(k0)
+	move	k0, sp
+	move	sp, k1
+
+	/* Save CPU registers on the stack */
+	CONTEXT_SAVE
+
+	/*
+	 * Leave EXL bit set in status register
+	 * This way interrupts can happen during
+	 * kernel part of the syscall
+	 */
+
+	/* Call syscall handler */
+	addiu	sp, sp, -20
+	jal	syscall_handler
+	sw	v0, 16(sp)
+	addiu	sp, sp, 20
+
+	lw	s1, CTX_EPC(sp)
+	addiu	s1, s1, 4
+	sw	s1, CTX_EPC(sp)
+
+	/*
+	 * Skip storing return value for syscall
+	 * if it was exception_return(0)
+	 */
+	lw	s0, CTX_V0(sp)
+	nop
+	beq	s0, zero, syscall_ret
+	nop
+
+	sw	v0, CTX_V0(sp)
+syscall_ret:
+	/* Restore CPU registers from the stack */
+	CONTEXT_RESTORE
+
+	eret
+END(syscall_entry)
+
+/*
+ * Low lever interrupt entry point
  */
 ENTRY(interrupt_entry)
 	/* Increment irq nesting variable */
@@ -178,58 +242,89 @@ ENTRY(interrupt_entry)
 	nop
 	addiu	k1, k1, 1
 	sw	k1, 0(k0)
+	addiu	k1, k1, -1
 
-	/* Set up interrupt stack if it wasn't done already */
-	sltiu	k0, k1, 2
-	beq	k0, zero, 1f
-	move	k0, sp /* Branch delay */
-	li	sp, INTSTKTOP
-1:
-	/* Save context registers on the stack */
-	EXCEPTION_SAVE_CTX
-#if 0
-	addiu	s0, k1, -1 /* s0 == 0 if outermost irq */
-#endif
+	bgtz	k1, 1f
+	move	k0, sp /* Save original sp for CONTEXT_SAVE */
 	
-	jal	interrupt_handler
-	nop
+	/* If irq_nesting is 0 set sp to curkstack */
+	la	k1, curkstack
+	j	2f
+	lw	sp, 0(k1)
 
-	/* Restore previous context */
-	EXCEPTION_RESTORE_CTX
+1:	/*
+	 * If irq_nesting is 1 set sp to INTSTKTOP
+	 * else leave as it is.
+	 */
+	sltiu	k1, k1, 2
+	beq	k1, zero, 2f
+	nop
+	li	sp, INTSTKTOP
+2:
+	/* Save CPU registers on the stack */
+	CONTEXT_SAVE
+
+	/* Get initial irq_nesting value */
+	la	t0, irq_nesting
+	lw	s0, 0(t0)
+	addiu	s0, s0, -1
+
+	/*
+	 * Clear EXL bit to allow further irq nesting.
+	 * Clear IE bit to disable interrupts for now.
+	 */
+	and	t3, t3, ~(MIPS_STATUS_EXL|MIPS_STATUS_INT_IE)
+	bgtz	s0, 3f
+	mtc0	t3, COP_0_STATUS
+
+	/* Lock scheduler only if intial irq_nesting > 0 */
+	jal	sched_lock
+	nop
+3:
+	jal	interrupt_handler
+	addiu	sp, sp, -16
 
 	la	k0, irq_nesting
-	lw	k1, 0(k0)
+	sw	s0, 0(k0)
+
+	/* Unlock scheduler only if initial irq_nesting == 0 */
+	bgtz	s0, 4f
+	addiu	sp, sp, 16
+
+	jal	sched_unlock
 	nop
-	addiu	k1, k1, -1
-	sw	k1, 0(k0)
+4:
+	/* Restore saved CPU registers from the stack */
+	CONTEXT_RESTORE
 
-	/* Return to user mode */
 	eret
+END(interrupt_entry)
 
-	.section ".vector.000", "ax", %progbits
+	.section ".vector.tlb", "ax", %progbits
 /*
- * TLB Refill exception handler
+ * TLB Refill exception entry point
  */
+	mfc0	k0, COP_0_EPC
 	la	a0, tlb_rf_ent_todo
 	jal	panic
 	nop
 
-	.section ".vector.100", "ax", %progbits
+	.section ".vector.cache", "ax", %progbits
 /*
- * Cache error exception entry
+ * Cache error exception entry point
  */
 	la	a0, cache_err_todo
 	jal	panic
 	nop
 
-	.section ".vector.180", "ax", %progbits
+	.section ".vector.exc", "ax", %progbits
 /*
- * General exception handler.
+ * General exception entry point.
  */
  	j	exception_entry
 	nop
 
-	.section ".vector.200", "ax", %progbits
+	.section ".vector.irq", "ax", %progbits
 /*
  * Interrupt handler.
  */
@@ -239,24 +334,20 @@ ENTRY(interrupt_entry)
 	.set reorder
 	.section ".data"
 
-copyin_todo:		.asciz "TODO: implement copuin\n"
-copyout_todo:		.asciz "TODO: implement copyout\n"
-copyinstr_todo:		.asciz "TODO: implement copyinstr\n"
-cpu_switch_todo:	.asciz "TODO: implement cpu_switch\n"
 tlb_rf_ent_todo:	.asciz "TODO: implement tlb_refill_entry\n"
 cache_err_todo:		.asciz "TODO: implement cache_error_entry\n"
-exc_ent_todo:		.asciz "TODO: implement exception_entry"
-syscall_ret_todo:	.asciz "TODO: implement syscal_ret\n"
-syscall_ent_todo:	.asciz "TODO: implement syscall_entry\n"
+
+	.section ".bss"
 
 /*
- * Interrupt nest counter.
+ * Interrupt nesting counter.
  *
- * This counter is incremented in the entry of interrupt handler
- * to switch the interrupt stack. Since all interrupt handlers
- * share same one interrupt stack, each handler must pay attention
- * to the stack overflow.
+ * This counter is incremented on every interrupt.
+ * It's used to decide if stack should be switched.
  */
-	.section ".bss"
-irq_nesting:
-	.long	0
+irq_nesting:	.word	0
+
+/*
+ * Kernel stack for the current thread
+ */
+curkstack:	.word	0

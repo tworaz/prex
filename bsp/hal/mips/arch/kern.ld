@@ -23,13 +23,14 @@ SECTIONS
 
 	.vectors . : {
 		_vector_start = .;
-		*(.vector.000);
+		. = 0x000;
+		*(.vector.tlb);
 		. = 0x100;
-		*(.vector.100);
+		*(.vector.cache);
 		. = 0x180;
-		*(.vector.180);
+		*(.vector.exc);
 		. = 0x200;
-		*(.vector.200);
+		*(.vector.irq);
 		_vector_end = .;
 	} :text
 

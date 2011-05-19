@@ -12,27 +12,29 @@ makeoptions	LDFLAGS+= -EL
 #
 # Memory address
 #
-memory		LOADER_TEXT	0x80000000	# Start of boot loader
-memory		KERNEL_TEXT	0x80022000	# Start of kernel
-memory		BOOTIMG_BASE	0x80002000	# Location of boot image
-memory		SYSPAGE_BASE	0x80010000	# Location of system page
+memory		LOADER_TEXT	0x80600000	# Start of boot loader
+memory		KERNEL_TEXT	0x80010000	# Start of kernel
+memory		BOOTIMG_BASE	0x80602000	# Location of boot image
+memory		SYSPAGE_BASE	0x80000000	# Location of system page
 
 #
 # Tunable paramters
 #
-options 	HZ=1000		    # Ticks/second of the clock
+options 	HZ=100              # Ticks/second of the clock
 options 	TIME_SLICE=50	    # Context switch ratio (msec)
 options 	OPEN_MAX=16	    # Max open files per process
 options 	BUF_CACHE=32	    # Blocks for buffer cache
 options 	FS_THREADS=4	    # Number of file system threads
-options	        RAM_SIZE=0x04000000 # Size of RAM memory
+
+options	        RAM_SIZE=0x04000000 # 64MB of RAM memory
+options 	JZ_EXTAL=12000000   # 12 MHz
 
 #
 # Platform settings
 #
 options		JZ47XX		# Processor core
 options 	LITTLE_ENDIAN   # Little endian
-options 	MMU		# Memory management unit
+x#options 	MMU		# Memory management unit
 options 	CACHE		# Cache memory
 #options 	FPU		# Floating point unit
 #options 	ROMBOOT		# Boot from ROM

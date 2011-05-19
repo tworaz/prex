@@ -31,17 +31,21 @@
  * trap.c - called from the abort handler when a processor detect abort.
  */
 
+#include <conf/config.h>
+#include <mips/cpuregs.h>
 #include <sys/signal.h>
 #include <kernel.h>
 #include <task.h>
 #include <hal.h>
 #include <exception.h>
+#include <interrupt.h>
 #include <cpu.h>
 #include <trap.h>
 #include <cpufunc.h>
 #include <context.h>
 #include <locore.h>
 
+#if 0
 #ifdef DEBUG
 /*
  * Trap name
@@ -52,11 +56,12 @@ static char *const trap_name[] = {
 	"Data Abort"
 };
 #define MAXTRAP (sizeof(trap_name) / sizeof(void *) - 1)
+
 #endif	/* !DEBUG */
 
 /*
  * abort/exception mapping table.
- * ARM exception is translated to the architecture
+ * MIPS exception is translated to the architecture
  * independent exception code.
  */
 static const int exception_map[] = {
@@ -64,14 +69,70 @@ static const int exception_map[] = {
 	SIGSEGV,	/* Prefech abort */
 	SIGSEGV,	/* Data abort */
 };
+#endif
+
+#ifdef DEBUG
+# define DEBUG_TRAP(regs) trap_dump(regs)
+#else
+# define DEBUG_TRAP(regs)
+#endif
+
+/*
+ * Forward declarations
+ */
+register_t
+syscall_handler(register_t a0, register_t a1, register_t a2, register_t a3,
+                register_t id);
 
 /*
  * Trap handler
  * Invoke the exception handler if it is needed.
  */
 void
-trap_handler(struct cpu_regs *regs)
+trap_handler(struct cpu_regs *r)
 {
+	uint32_t code;
+	uint32_t is_kern;
+
+	code = (r->cause & MIPS_CAUSE_EXC_CODE_MASK) >> MIPS_CAUSE_EXC_CODE_SHIFT;
+	is_kern = (r->status & MIPS_STATUS_KSU_MASK) == MIPS_STATUS_KSU_KERNEL;
+
+	ASSERT(code != MIPS_CAUSE_EXC_CODE_IRQ);
+	ASSERT(code != MIPS_CAUSE_EXC_CODE_SYS);
+
+	/* In non MMU version of Prex everything runs in kernel mode */
+#if 0
+	if (in_kernel > 1) {
+		DEBUG_TRAP(r);
+		panic("Kernel exception!");
+	}
+#endif
+	printf("ENTER: MIPS Trap code: %u, task: %s\n", code, curtask->name);
+
+	switch(code) {
+	case MIPS_CAUSE_EXC_CODE_TLBL:
+	case MIPS_CAUSE_EXC_CODE_TLBS:
+		DEBUG_TRAP(r);
+		panic("TLB exception in kernel\n");
+		exception_mark(SIGSEGV);
+		break;
+
+	case MIPS_CAUSE_EXC_CODE_RI:
+		DEBUG_TRAP(r);
+		exception_mark(SIGILL);
+		break;
+
+	default:
+		DEBUG_TRAP(r);
+		panic("Unhandled exception type!");
+	}
+
+	exception_deliver();
+
+	printf("LEAVE: MIPS Trap task: %s\n", curtask->name);
+
+	/* Disable interrupts */
+	splhigh();
 #if 0
 	u_long trap_no = regs->r0;
 
@@ -103,27 +164,26 @@ trap_handler(struct cpu_regs *regs)
 	exception_mark(exception_map[trap_no]);
 	exception_deliver();
 #endif
-        panic("TODO: implement trap_hadnler()");
 }
 
 #ifdef DEBUG
 void
 trap_dump(struct cpu_regs *r)
 {
-#if 0
-	printf("Trap frame %x\n", r);
-	printf(" r0  %08x r1  %08x r2  %08x r3  %08x r4  %08x r5  %08x\n",
-	       r->r0, r->r1, r->r2, r->r3, r->r4, r->r5);
-	printf(" r6  %08x r7  %08x r8  %08x r9  %08x r10 %08x r11 %08x\n",
-	       r->r6, r->r7, r->r8, r->r9, r->r10, r->r11);
-	printf(" r12 %08x sp  %08x lr  %08x pc  %08x cpsr %08x\n",
-	       r->r12, r->sp, r->lr, r->pc, r->cpsr);
+	printf("\nTrap frame %x, task=%s\n", r, curtask->name);
 
-	printf(" >> interrupt is %s\n",
-	       (r->cpsr & PSR_INT_MASK) ? "disabled" : "enabled");
+	printf(" at %08x v0 %08x v1 %08x a0 %08x a1 %08x a2 %08x\n",
+	       r->at, r->v0, r->v1, r->a0, r->a1, r->a2);
+	printf(" a3 %08x t0 %08x t1 %08x t2 %08x t3 %08x t4 %08x\n",
+	       r->a3, r->t0, r->t1, r->t2, r->t3, r->t4);
+	printf(" t5 %08x t6 %08x t7 %08x s0 %08x s1 %08x s2 %08x\n",
+	       r->t5, r->t6, r->t7, r->s0, r->s1, r->s2);
+	printf(" s3 %08x s4 %08x s5 %08x s6 %08x s7 %08x t8 %08x\n",
+	       r->s3, r->s4, r->s5, r->s6, r->s7, r->t8);
+	printf(" t9 %08x gp %08x sp %08x s8 %08x ra %08x\n",
+	       r->t9, r->gp, r->sp, r->s8, r->ra);
 
-	printf(" >> task=%s\n", curtask->name);
-#endif
-        printf("TODO: implement trap_dump\n");
+	printf("\n epc %08x  bad %08x  status %08x  cause %08x\n\n",
+	       r->epc, r->vaddr, r->status, r->cause);
 }
 #endif /* !DEBUG */

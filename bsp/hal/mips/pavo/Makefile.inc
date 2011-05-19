@@ -1,6 +1,7 @@
 
 SRCS:=	        mips/arch/locore.S \
                 mips/arch/cache.S \
+                mips/arch/copy.S \
                 mips/arch/cpufunc.S \
                 mips/arch/cpu.c \
                 mips/arch/trap.c \

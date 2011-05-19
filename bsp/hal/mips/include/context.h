@@ -121,18 +121,19 @@ struct cpu_regs {
  * Kernel mode context for context switching.
  */
 struct kern_regs {
-	uint32_t	s0;
-	uint32_t	s1;
-	uint32_t	s2;
-	uint32_t	s3;
-	uint32_t	s4;
-	uint32_t	s5;
-	uint32_t	s6;
-	uint32_t	s7;
-	uint32_t	gp;
-	uint32_t	sp;
-	uint32_t	s8;
-	uint32_t	ra;
+	uint32_t	s0;	/*  +0 (00) */
+	uint32_t	s1;	/*  +4 (04) */
+	uint32_t	s2;	/*  +8 (08) */
+	uint32_t	s3;	/* +12 (0C) */
+	uint32_t	s4;	/* +16 (10) */
+	uint32_t	s5;	/* +20 (14) */
+	uint32_t	s6;	/* +24 (18) */
+	uint32_t	s7;	/* +28 (1C) */
+	uint32_t	s8;	/* +32 (20) */
+	uint32_t	gp;	/* +36 (24) */
+	uint32_t	sp;	/* +40 (28) */
+	uint32_t	ra;	/* +44 (2C) */
+	uint32_t	kstack;	/* +48 (30) */
 };
 
 /*
@@ -141,7 +142,7 @@ struct kern_regs {
 struct context {
 	struct kern_regs kregs;		/* kernel mode registers */
 	struct cpu_regs	*uregs;		/* user mode registers */
-	struct cpu_regs	*saved_regs;	/* savecd user mode registers */
+	struct cpu_regs	*saved_regs;	/* saved user mode registers */
 };
 
 typedef struct context *context_t;	/* context id */
@@ -189,109 +190,20 @@ typedef struct context *context_t;	/* context id */
 
 #define CTXREGS	  (4*35)
 
-#ifdef __ASSEMBLY__
+#define KREG_S0      0
+#define KREG_S1      4
+#define KREG_S2      8
+#define KREG_S3     12
+#define KREG_S4     16
+#define KREG_S5     20
+#define KREG_S6     24
+#define KREG_S7     28
+#define KREG_S8     32
+#define KREG_GP     36
+#define KREG_SP     40
+#define KREG_RA     44
+#define KREG_KSTACK 48
 
-/* 
- * Macro to store struct cpu_regs on the stack
- * k0 = stack pointer to actualy save
- */
-.macro EXCEPTION_SAVE_CTX
-	.set push
-	.set noat
-	.set reorder
-	sub	sp, sp, CTXREGS
-	sw	ra, CTX_RA(sp)
-	sw	s8, CTX_S8(sp)
-	sw	k0, CTX_SP(sp)
-	sw	gp, CTX_GP(sp)
-	sw	t9, CTX_T9(sp)
-	sw	t8, CTX_T8(sp)
-	sw	s7, CTX_S7(sp)
-	sw	s6, CTX_S6(sp)
-	sw	s5, CTX_S5(sp)
-	sw	s4, CTX_S4(sp)
-	sw	s3, CTX_S3(sp)
-	sw	s2, CTX_S2(sp)
-	sw	s1, CTX_S1(sp)
-	sw	s0, CTX_S0(sp)
-	sw	t7, CTX_T7(sp)
-	sw	t6, CTX_T6(sp)
-	sw	t5, CTX_T5(sp)
-	sw	t4, CTX_T4(sp)
-	sw	t3, CTX_T3(sp)
-	sw	t2, CTX_T2(sp)
-	sw	t1, CTX_T1(sp)
-	sw	t0, CTX_T0(sp)
-	sw	a3, CTX_A3(sp)
-	sw	a2, CTX_A2(sp)
-	sw	a1, CTX_A1(sp)
-	sw	a0, CTX_A0(sp)
-	sw	v1, CTX_V1(sp)
-	sw	v0, CTX_V0(sp)
-	sw	AT, CTX_AT(sp)
-	mfhi	t0
-	mflo	t1
-	sw	t0, CTX_HI(sp)
-	sw	t1, CTX_LO(sp)
-	mfc0	t2, COP_0_CAUSE	
-	sw	t2, CTX_CAUSE(sp)
-	mfc0	t3, COP_0_STATUS
-	sw	t3, CTX_STATUS(sp)
-	mfc0	t4, COP_0_BADVADDR
-	sw	t4, CTX_VADDR(sp)
-	mfc0	t5, COP_0_EPC
-	sw	t5, CTX_EPC(sp)
-	.set pop
-.endm
-
-/*
- * Macro to restore struct cpu_regs from the stack
- */
-.macro EXCEPTION_RESTORE_CTX
-	.set push
-	.set noat
-	.set reorder
-	lw	t0, CTX_EPC(sp)
-	lw	t1, CTX_STATUS(sp)
-	lw	t2, CTX_LO(sp)
-	lw	t3, CTX_HI(sp)
-	mtc0	t0, COP_0_EPC
-	mtlo	t2
-	mtc0	t1, COP_0_STATUS
-	mthi	t3
-	/* No need to restore BADVADDR and CAUSE */
-	lw	AT, CTX_AT(sp)
-	lw	v0, CTX_V0(sp)
-	lw	v1, CTX_V1(sp)
-	lw	a0, CTX_A0(sp)
-	lw	a1, CTX_A1(sp)
-	lw	a2, CTX_A2(sp)
-	lw	a3, CTX_A3(sp)
-	lw	t0, CTX_T0(sp)
-	lw	t1, CTX_T1(sp)
-	lw	t2, CTX_T2(sp)
-	lw	t3, CTX_T3(sp)
-	lw	t4, CTX_T4(sp)
-	lw	t5, CTX_T5(sp)
-	lw	t6, CTX_T6(sp)
-	lw	t7, CTX_T7(sp)
-	lw	s0, CTX_S0(sp)
-	lw	s1, CTX_S1(sp)
-	lw	s2, CTX_S2(sp)
-	lw	s3, CTX_S3(sp)
-	lw	s4, CTX_S4(sp)
-	lw	s5, CTX_S5(sp)
-	lw	s6, CTX_S6(sp)
-	lw	s7, CTX_S7(sp)
-	lw	t8, CTX_T8(sp)
-	lw	t9, CTX_T9(sp)
-	lw	gp, CTX_GP(sp)
-	lw	s8, CTX_S8(sp)
-	lw	ra, CTX_RA(sp)
-	/* Stack goes last */
-	lw	sp, CTX_SP(sp)
-	.set pop
-.endm
-#endif /* __ASSEMBLY */
+#define KREGS     (4*13)
 
 #endif /* !_MIPS_CONTEXT_H */

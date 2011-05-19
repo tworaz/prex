@@ -70,7 +70,9 @@ context_set(context_t ctx, int type, register_t val)
 		/* Set kernel mode stack pointer */
 		ctx->uregs = (struct cpu_regs *)
 			((vaddr_t)val - sizeof(struct cpu_regs));
+
 		k->sp = (uint32_t)ctx->uregs;
+		k->kstack = (uint32_t)val;
 
 		/* Reset minimum user mode registers */
 		u = ctx->uregs;
@@ -78,10 +80,10 @@ context_set(context_t ctx, int type, register_t val)
 		u->a1 = 0x11111111;
 		u->a2 = 0x22222222;
 		u->a3 = 0x33333333;
-		printf("TODO: context_set CTX_KSTACK\n");
-		/*
-		u->sr = xxx;
-		*/
+
+		u->status  = (uint32_t)(MIPS_STATUS_INT_MASK);
+		u->status |= (uint32_t)(MIPS_STATUS_INT_IE);
+		/* u->status |= (uint32_t)(MIPS_STATUS_EXL); */
 		break;
 
 	case CTX_KENTRY:
@@ -94,7 +96,7 @@ context_set(context_t ctx, int type, register_t val)
 		/* Kernel mode argument */
 		k->s1 = (uint32_t)val;
 		break;
-#if 0
+
 	case CTX_USTACK:
 		/* User mode stack pointer */
 		u = ctx->uregs;
@@ -104,20 +106,22 @@ context_set(context_t ctx, int type, register_t val)
 	case CTX_UENTRY:
 		/* User mode program counter */
 		u = ctx->uregs;
-		u->cpsr = PSR_APP_MODE;	/* FIQ/IRQ is enabled */
-		u->pc = (uint32_t)val;
-		u->lr = 0x12345678;
+		u->epc = (uint32_t)val;
+		/* u->ra = (uint32_t)val; */
+
+		u->status  = (uint32_t)(MIPS_STATUS_INT_MASK);
+		u->status |= (uint32_t)(MIPS_STATUS_INT_IE);
+		u->status |= (uint32_t)(MIPS_STATUS_EXL);
 		break;
 
 	case CTX_UARG:
 		/* User mode argument */
 		u = ctx->uregs;
-		u->r0 = (uint32_t)val;		/* Argument 1 */
+		u->a0 = (uint32_t)val;		/* Argument 0 */
 		break;
-#endif
+
 	default:
 		/* invalid */
-		printf("TODO: context_set(): unimplemented type = %d\n", type);
 		panic("context_set, unimplemented context type\n");
 		break;
 	}
@@ -131,7 +135,6 @@ context_set(context_t ctx, int type, register_t val)
  *
  * It is assumed all interrupts are disabled by caller.
  *
- * TODO: FPU context is not switched as of now.
  */
 void
 context_switch(context_t prev, context_t next)
@@ -155,7 +158,6 @@ context_switch(context_t prev, context_t next)
 void
 context_save(context_t ctx)
 {
-#if 0
 	struct cpu_regs *cur, *sav;
 
 	/* Copy current register context into user mode stack */
@@ -167,8 +169,6 @@ context_save(context_t ctx)
 
 	/* Adjust stack pointer */
 	cur->sp = (uint32_t)sav - sizeof(uint32_t);
-#endif
-        panic("TODO: implement context_save()");
 }
 
 /*
@@ -177,17 +177,19 @@ context_save(context_t ctx)
 void
 context_restore(context_t ctx)
 {
-#if 0
 	struct cpu_regs *cur;
 
+	ASSERT(ctx->saved_regs != 0x0);
 	/* Restore user mode context */
 	cur = ctx->uregs;
+	ASSERT(cur != 0x0);
 	copyin(ctx->saved_regs, cur, sizeof(*cur));
 
 	/* Correct some registers for fail safe */
-	cur->cpsr = (cur->cpsr & ~PSR_MODE) | PSR_APP_MODE;
-#endif
-        panic("TODO: implement context_restore()");
+	cur->status  = (uint32_t)(MIPS_STATUS_INT_MASK);
+/*
+	cur->status |= (uint32_t)(MIPS_STATUS_EXL);
+*/
 }
 
 void
