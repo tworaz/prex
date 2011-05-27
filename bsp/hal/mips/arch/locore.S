@@ -55,7 +55,7 @@ ENTRY(kernel_start)
 	mtc0	t1, COP_0_CAUSE
 
 	/* Setup sp and gp */
-	li	sp, BOOTSTKTOP
+	li	sp, (BOOTSTKTOP - CTXREGS)
 	la	gp, _gp
 
 	/* Clear kernel BSS */
@@ -66,13 +66,13 @@ ENTRY(kernel_start)
 	bne     t2, t3, 1b
 	addiu   t2, t2, 4
 
-	li	k1, SYSSTKTOP
+	li	k1, BOOTSTKTOP
 	la	k0, curkstack
 	sw	k1, 0(k0)
 
 	/* Jump to main */
 	j	main
-	ehb	/* Just in case */
+	nop
 END(kernel_start)
 
 /*
@@ -98,7 +98,6 @@ END(kernel_thread_entry)
 ENTRY(cpu_switch)
 	/* Get current kstack pointer */
 	la	t0, curkstack
-	/* lw	t1, 0(t0) */
 
 	/* Save regs in prev */
 	sw	ra, KREG_RA(a0)
@@ -113,7 +112,6 @@ ENTRY(cpu_switch)
 	sw	s2, KREG_S2(a0)
 	sw	s1, KREG_S1(a0)
 	sw	s0, KREG_S0(a0)
-	/* sw	t1, KREG_KSTACK(a0) */
 
 	/* Load regs from next */
 	lw	t1, KREG_KSTACK(a1)
@@ -130,9 +128,19 @@ ENTRY(cpu_switch)
 	lw	s1, KREG_S1(a1)
 	lw	s0, KREG_S0(a1)
 
+#ifdef CONFIG_MMU
 	/* Jump to return address */
 	j	ra
 	sw	t1, 0(t0) /* Set new curkstack value */
+#else
+	mfc0	t9, COP_0_STATUS
+	sw	t1, 0(t0) /* Set new curkstack value */
+	sw	t9, KREG_STATUS(a0)
+
+	lw	t9, KREG_STATUS(a1)
+	j	ra
+	mtc0	t9, COP_0_STATUS
+#endif /* CONFIG_MMU */
 END(cpu_switch)
 
 /*
@@ -170,8 +178,9 @@ ENTRY(exception_entry)
 	beq	k0, zero, syscall_entry
 	move	k0, sp
 
-	li	sp, SYSSTKTOP
-	CONTEXT_SAVE
+	li	sp, EXCSTKTOP
+	sub	sp, sp, CTXREGS
+	CONTEXT_SAVE sp
 
 	move	a0, sp
 	jal	trap_handler
@@ -179,7 +188,7 @@ ENTRY(exception_entry)
 	addiu	sp, sp, 16
 
 	/* Restore previous context */
-	CONTEXT_RESTORE
+	CONTEXT_RESTORE sp
 
 	/* Return to user mode */
 	eret
@@ -191,33 +200,32 @@ END(exception_entry)
 	.global syscall_ret
 ENTRY(syscall_entry)
 	/* Set sp to current thread kstack */
-	la	k0, curkstack
-	lw	k1, 0(k0)
-	move	k0, sp
-	move	sp, k1
+	move	k0, sp /* Save original sp */
+	la	k1, curkstack
+	lw	sp, 0(k1)
+	nop
 
-	/* Save CPU registers on the stack */
-	CONTEXT_SAVE
+	/* Save CPU registers on the kstack */
+	sub	sp, sp, CTXREGS
+	CONTEXT_SAVE sp
 
 	/*
-	 * Leave EXL bit set in status register
-	 * This way interrupts can happen during
-	 * kernel part of the syscall
+	 * Increase return address by 4 to avoid
+	 * re-executing syscall instruction after eret
 	 */
+	lw	s0, CTX_EPC(sp)
+	addiu	s0, s0, 4
+	sw	s0, CTX_EPC(sp)
 
 	/* Call syscall handler */
-	addiu	sp, sp, -20
+	addiu	sp, sp, -24
 	jal	syscall_handler
-	sw	v0, 16(sp)
-	addiu	sp, sp, 20
-
-	lw	s1, CTX_EPC(sp)
-	addiu	s1, s1, 4
-	sw	s1, CTX_EPC(sp)
+	sw	v0, 16(sp)	/* Store 5th argument according to o32 ABI */
+	addiu	sp, sp, 24
 
 	/*
 	 * Skip storing return value for syscall
-	 * if it was exception_return(0)
+	 * if it was exception_return == 0
 	 */
 	lw	s0, CTX_V0(sp)
 	nop
@@ -227,7 +235,7 @@ ENTRY(syscall_entry)
 	sw	v0, CTX_V0(sp)
 syscall_ret:
 	/* Restore CPU registers from the stack */
-	CONTEXT_RESTORE
+	CONTEXT_RESTORE sp
 
 	eret
 END(syscall_entry)
@@ -236,66 +244,26 @@ END(syscall_entry)
  * Low lever interrupt entry point
  */
 ENTRY(interrupt_entry)
-	/* Increment irq nesting variable */
-	la	k0, irq_nesting
-	lw	k1, 0(k0)
-	nop
-	addiu	k1, k1, 1
-	sw	k1, 0(k0)
-	addiu	k1, k1, -1
-
-	bgtz	k1, 1f
-	move	k0, sp /* Save original sp for CONTEXT_SAVE */
-	
-	/* If irq_nesting is 0 set sp to curkstack */
+	move	k0, sp
 	la	k1, curkstack
-	j	2f
 	lw	sp, 0(k1)
-
-1:	/*
-	 * If irq_nesting is 1 set sp to INTSTKTOP
-	 * else leave as it is.
-	 */
-	sltiu	k1, k1, 2
-	beq	k1, zero, 2f
 	nop
+
+	sub	sp, sp, CTXREGS
+	CONTEXT_SAVE sp
+
 	li	sp, INTSTKTOP
-2:
-	/* Save CPU registers on the stack */
-	CONTEXT_SAVE
 
-	/* Get initial irq_nesting value */
-	la	t0, irq_nesting
-	lw	s0, 0(t0)
-	addiu	s0, s0, -1
-
-	/*
-	 * Clear EXL bit to allow further irq nesting.
-	 * Clear IE bit to disable interrupts for now.
-	 */
-	and	t3, t3, ~(MIPS_STATUS_EXL|MIPS_STATUS_INT_IE)
-	bgtz	s0, 3f
-	mtc0	t3, COP_0_STATUS
-
-	/* Lock scheduler only if intial irq_nesting > 0 */
-	jal	sched_lock
-	nop
-3:
 	jal	interrupt_handler
 	addiu	sp, sp, -16
-
-	la	k0, irq_nesting
-	sw	s0, 0(k0)
-
-	/* Unlock scheduler only if initial irq_nesting == 0 */
-	bgtz	s0, 4f
 	addiu	sp, sp, 16
 
-	jal	sched_unlock
+	la	k0, curkstack
+	lw	sp, 0(k0)
 	nop
-4:
-	/* Restore saved CPU registers from the stack */
-	CONTEXT_RESTORE
+
+	sub	sp, sp, CTXREGS
+	CONTEXT_RESTORE sp
 
 	eret
 END(interrupt_entry)

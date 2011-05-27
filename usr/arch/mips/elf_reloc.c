@@ -28,45 +28,88 @@
  */
 #include <sys/elf.h>
 #include <sys/syslog.h>
+#include <stdlib.h>
+
+
+struct reloc16hi {
+	Elf32_Addr *addr;
+	Elf32_Addr val;
+	struct reloc16hi* prev;
+};
+
+struct reloc16hi *reloc_head = NULL;
 
 int
 relocate_rel(Elf32_Rel *rel, Elf32_Addr sym_val, char *target_sect)
 {
-#if 0
-	Elf32_Addr *where, tmp;
-	Elf32_Sword addend;
+	Elf32_Addr *where;
+	Elf32_Sword addend, addend_lo;
+	struct reloc16hi* rtmp;
 
 	where = (Elf32_Addr *)(target_sect + rel->r_offset);
 
 	switch (ELF32_R_TYPE(rel->r_info)) {
-	case R_ARM_NONE:
-		break;
-	case R_ARM_ABS32:
-		*where += (Elf32_Addr)sym_val;
-		/* printf("R_ARM_ABS32: %x -> %x\n", where, *where); */
-		break;
-	case R_ARM_PC24:
-	case R_ARM_PLT32:
-	case R_ARM_CALL:
-	case R_ARM_JUMP24:
-		addend = *where & 0x00ffffff;
-		if (addend & 0x00800000)
-			addend |= 0xff000000;
-		tmp = sym_val - (Elf32_Addr)where + (addend << 2);
-		tmp >>= 2;
-		*where = (*where & 0xff000000) | (tmp & 0x00ffffff);
-		/* printf("R_ARM_PC24: %x -> %x\n", where, *where); */
-		break;
-	default:
+		case R_MIPS_NONE:
+			break;
+		case R_MIPS_32:
+			*where += sym_val;
+			break;
+		case R_MIPS_26:
+			if (sym_val % 4) {
+				syslog(LOG_ERR, "R_MIPS_26: Unaligned symbol relocation\n");
+				return -1;
+			}
+			if ((sym_val & 0xf0000000) !=
+			    ((Elf32_Addr)(where + 4) & 0xf0000000)) {
+				syslog(LOG_ERR, "R_MIPS_26: Relocation overflow\n");
+				return -1;
+			}
+
+			*where = (*where & ~0x03ffffff) |
+			         ((*where + (sym_val >> 2)) & 0x03ffffff);
+			break;
+		case R_MIPS_HI16:
+			rtmp = malloc(sizeof(struct reloc16hi));
+			if (NULL == rtmp) {
+				syslog(LOG_CRIT, "OOM: Relocation failed!\n");
+				return -1;
+			}
+			rtmp->addr = where;
+			rtmp->val = sym_val;
+			rtmp->prev = reloc_head;
+			reloc_head = rtmp;
+			break;
+		case R_MIPS_LO16:
+			/* Sign extended addend from LO16 */
+			addend_lo = ((*where & 0xffff) ^ 0x8000) - 0x8000;
+			while(NULL != reloc_head) {
+				rtmp = reloc_head;
+				reloc_head = rtmp->prev;
+
+				/* HI16 relocation */
+				addend = ((*rtmp->addr) << 16) + addend_lo;
+				addend += sym_val;
+
+				/* Account for the sign extension in the low bits */
+				addend = ((addend >> 16) + ((addend & 0x8000) != 0)) & 0xffff;
+				*(rtmp->addr) = ((*(rtmp->addr)) & ~0xffff) | addend;
+
+				free(rtmp);
+			}
+
+			/* Time for LO16 */
+			addend = addend_lo + sym_val;
+			*where = (*where & ~0xffff) | (addend & 0xffff);
+
+			break;
+		default:
 #ifdef DEBUG
-		syslog(LOG_ERR, "relocation fail type=%d\n", ELF32_R_TYPE(rel->r_info));
+			syslog(LOG_ERR, "Unsupported relocation type=%d\n",
+			       ELF32_R_TYPE(rel->r_info));
 #endif
-		return -1;
+			return -1;
 	}
 	return 0;
-#endif
-	sys_panic("TODO: implement relocate_rel()\n");
-	return -1;
 }
 
 int

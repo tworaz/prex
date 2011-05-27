@@ -46,8 +46,8 @@
 
 #include <kernel.h>
 #include <kmem.h>
-#include <cpu.h>
 #include <context.h>
+#include <cpufunc.h>
 #include <locore.h>
 #include <trap.h>
 
@@ -122,7 +122,7 @@ context_set(context_t ctx, int type, register_t val)
 
 	default:
 		/* invalid */
-		panic("context_set, unimplemented context type\n");
+		panic("Invalid context type!\n");
 		break;
 	}
 }
@@ -179,10 +179,8 @@ context_restore(context_t ctx)
 {
 	struct cpu_regs *cur;
 
-	ASSERT(ctx->saved_regs != 0x0);
 	/* Restore user mode context */
 	cur = ctx->uregs;
-	ASSERT(cur != 0x0);
 	copyin(ctx->saved_regs, cur, sizeof(*cur));
 
 	/* Correct some registers for fail safe */
@@ -196,6 +194,6 @@ void
 context_dump(context_t ctx)
 {
 #ifdef DEBUG
-	trap_dump(ctx->uregs);
+	trap_dump(ctx->uregs, get_cp0_cause(), get_cp0_badvaddr());
 #endif
 }

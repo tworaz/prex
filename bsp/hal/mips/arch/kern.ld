@@ -57,21 +57,17 @@ SECTIONS
 	. = ALIGN(4);
 
 	__bss = .;
-	.sbss . : {
+	.bss . : {
+		*(.bss)
+		*(.bss.*)
+		*(.dynbss)
+		*(COMMON)
 		*(.sbss)
 		*(.sbss.*)
 		*(.dynsbss)
 		*(.scommon)
 	}
 
-	. = ALIGN(4);
-
-	.bss . : {
-		*(.bss)
-		*(.bss.*)
-		*(.dynbss)
-		*(COMMON)
-	}
 	. = ALIGN(4);
 	__end = .;
 

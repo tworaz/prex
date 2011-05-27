@@ -27,10 +27,29 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIPS_SETJMP_H
-#define _MIPS_SETJMP_H
+#ifndef _JZ_UART_H
+#define _JZ_UART_H
 
-#define _JBLEN 60
-#define _JB_MAGIC_SETJMP	0x4278f501
+#include <mips/cpuregs.h>
 
-#endif /* !_MIPS_SETJMP_H */
+#define JZ_UART_BASE	(0x10030000 | MIPS_KSEG1)
+#define JZ_UART_IRQ	9
+#define JZ_UART_CLK	3686400
+
+/* UART Registers */
+#define	JZ_UART_THR	(JZ_UART_BASE + 0x00)
+#define	JZ_UART_IER	(JZ_UART_BASE + 0x04)
+#define	JZ_UART_FCR	(JZ_UART_BASE + 0x08)
+#define	JZ_UART_LSR 	(JZ_UART_BASE + 0x14)
+
+/* LSR Register Bits */
+#define	JZ_UART_LSR_DRY		(1 << 0)
+#define	JZ_UART_LSR_OVER	(1 << 1)
+#define	JZ_UART_LSR_PARER	(1 << 2)
+#define	JZ_UART_LSR_FMER	(1 << 3)
+#define	JZ_UART_LSR_BI		(1 << 4)
+#define	JZ_UART_LSR_TDRQ	(1 << 5)
+#define	JZ_UART_LSR_TEMP	(1 << 6)
+#define	JZ_UART_LSR_FIFOE	(1 << 7)
+
+#endif /* !_JZ_UART_H */

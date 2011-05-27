@@ -27,10 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIPS_SETJMP_H
-#define _MIPS_SETJMP_H
+#ifndef _JZ_CPM_H
+#define _JZ_CPM_H
 
-#define _JBLEN 60
-#define _JB_MAGIC_SETJMP	0x4278f501
-
-#endif /* !_MIPS_SETJMP_H */
+#endif /* !JZ_CPM_H */

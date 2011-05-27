@@ -40,7 +40,11 @@ SECTIONS
 
 	. = ALIGN(4);
 
-	.sbss . : {
+	.bss . : {
+		*(.bss)
+		*(.bss.*)
+		*(.dynbss)
+		*(COMMON)
 		*(.sbss)
 		*(.sbss.*)
 		*(.dynsbss)
@@ -48,13 +52,6 @@ SECTIONS
 	}
 
 	. = ALIGN(4);
-
-	.bss . : {
-		*(.bss)
-		*(.bss.*)
-		*(.dynbss)
-		*(COMMON)
-	}
 
 	/DISCARD/ : { *(.comment .note) }
 }

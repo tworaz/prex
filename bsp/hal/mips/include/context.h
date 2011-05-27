@@ -81,59 +81,60 @@
  */
 struct cpu_regs {
 	uint32_t	epc;	/*   +0 (00) */
-	uint32_t	vaddr;  /*   +4 (04) */
-	uint32_t	status; /*   +8 (08) */
-	uint32_t	cause;  /*  +12 (0C) */
-	uint32_t	lo;     /*  +16 (10) */
-	uint32_t	hi;     /*  +20 (14) */
-	uint32_t	at;     /*  +24 (18) */
-	uint32_t	v0;     /*  +28 (1C) */
-	uint32_t	v1;     /*  +32 (20) */
-	uint32_t	a0;     /*  +36 (24) */
-	uint32_t	a1;     /*  +40 (28) */
-	uint32_t	a2;     /*  +44 (2C) */
-	uint32_t	a3;     /*  +48 (30) */
-	uint32_t	t0;     /*  +52 (34) */
-	uint32_t	t1;     /*  +56 (38) */
-	uint32_t	t2;     /*  +60 (3C) */
-	uint32_t	t3;     /*  +64 (40) */
-	uint32_t	t4;     /*  +68 (44) */
-	uint32_t	t5;     /*  +72 (48) */
-	uint32_t	t6;     /*  +76 (4C) */
-	uint32_t	t7;     /*  +80 (50) */
-	uint32_t	s0;     /*  +84 (54) */
-	uint32_t	s1;     /*  +88 (58) */
-	uint32_t	s2;     /*  +92 (5C) */
-	uint32_t	s3;     /*  +96 (60) */
-	uint32_t	s4;     /* +100 (64) */
-	uint32_t	s5;     /* +104 (68) */
-	uint32_t	s6;     /* +108 (6C) */
-	uint32_t	s7;     /* +112 (70) */
-	uint32_t	t8;     /* +116 (74) */
-	uint32_t	t9;     /* +120 (78) */
-	uint32_t	gp;     /* +124 (7C) */
-	uint32_t	sp;     /* +128 (80) */
-	uint32_t	s8;     /* +132 (84) */
-	uint32_t	ra;	/* +136 (88) */
+	uint32_t	status; /*   +4 (04) */
+	uint32_t	lo;     /*   +8 (08) */
+	uint32_t	hi;     /*  +12 (1C) */
+	uint32_t	at;     /*  +16 (10) */
+	uint32_t	v0;     /*  +20 (14) */
+	uint32_t	v1;     /*  +24 (18) */
+	uint32_t	a0;     /*  +28 (1C) */
+	uint32_t	a1;     /*  +32 (20) */
+	uint32_t	a2;     /*  +36 (24) */
+	uint32_t	a3;     /*  +40 (28) */
+	uint32_t	t0;     /*  +44 (2C) */
+	uint32_t	t1;     /*  +48 (30) */
+	uint32_t	t2;     /*  +52 (34) */
+	uint32_t	t3;     /*  +56 (38) */
+	uint32_t	t4;     /*  +60 (3C) */
+	uint32_t	t5;     /*  +64 (40) */
+	uint32_t	t6;     /*  +68 (44) */
+	uint32_t	t7;     /*  +72 (48) */
+	uint32_t	s0;     /*  +76 (4C) */
+	uint32_t	s1;     /*  +80 (50) */
+	uint32_t	s2;     /*  +84 (54) */
+	uint32_t	s3;     /*  +88 (58) */
+	uint32_t	s4;     /*  +92 (5C) */
+	uint32_t	s5;     /*  +96 (60) */
+	uint32_t	s6;     /* +100 (64) */
+	uint32_t	s7;     /* +104 (68) */
+	uint32_t	t8;     /* +108 (6C) */
+	uint32_t	t9;     /* +112 (70) */
+	uint32_t	gp;     /* +116 (74) */
+	uint32_t	sp;     /* +120 (78) */
+	uint32_t	s8;     /* +124 (7C) */
+	uint32_t	ra;     /* +128 (80) */
 };
 
 /*
  * Kernel mode context for context switching.
  */
 struct kern_regs {
-	uint32_t	s0;	/*  +0 (00) */
-	uint32_t	s1;	/*  +4 (04) */
-	uint32_t	s2;	/*  +8 (08) */
-	uint32_t	s3;	/* +12 (0C) */
-	uint32_t	s4;	/* +16 (10) */
-	uint32_t	s5;	/* +20 (14) */
-	uint32_t	s6;	/* +24 (18) */
-	uint32_t	s7;	/* +28 (1C) */
-	uint32_t	s8;	/* +32 (20) */
-	uint32_t	gp;	/* +36 (24) */
-	uint32_t	sp;	/* +40 (28) */
-	uint32_t	ra;	/* +44 (2C) */
+	uint32_t	s0;     /*  +0 (00) */
+	uint32_t	s1;	    /*  +4 (04) */
+	uint32_t	s2;	    /*  +8 (08) */
+	uint32_t	s3;     /* +12 (0C) */
+	uint32_t	s4;     /* +16 (10) */
+	uint32_t	s5;     /* +20 (14) */
+	uint32_t	s6;     /* +24 (18) */
+	uint32_t	s7;     /* +28 (1C) */
+	uint32_t	s8;     /* +32 (20) */
+	uint32_t	gp;     /* +36 (24) */
+	uint32_t	sp;     /* +40 (28) */
+	uint32_t	ra;     /* +44 (2C) */
 	uint32_t	kstack;	/* +48 (30) */
+#ifndef CONFIG_MMU
+	uint32_t	status; /* +52 (34) */
+#endif /* CONFIG_MMU */
 };
 
 /*
@@ -153,42 +154,40 @@ typedef struct context *context_t;	/* context id */
  * Register offset in cpu_regs
  */
 #define	CTX_EPC     0
-#define	CTX_VADDR   4
-#define	CTX_STATUS  8
-#define	CTX_CAUSE  12
-#define	CTX_LO     16
-#define	CTX_HI     20
-#define	CTX_AT     24
-#define	CTX_V0     28
-#define	CTX_V1     32
-#define	CTX_A0     36
-#define	CTX_A1     40
-#define	CTX_A2     44
-#define	CTX_A3     48
-#define	CTX_T0     52
-#define	CTX_T1     56
-#define	CTX_T2     60
-#define	CTX_T3     64
-#define	CTX_T4     68
-#define	CTX_T5     72
-#define	CTX_T6     76
-#define	CTX_T7     80
-#define	CTX_S0     84
-#define	CTX_S1     88
-#define	CTX_S2     92
-#define	CTX_S3     96
-#define	CTX_S4    100
-#define	CTX_S5    104
-#define	CTX_S6    108
-#define	CTX_S7    112
-#define	CTX_T8    116
-#define	CTX_T9    120
-#define	CTX_GP    124
-#define	CTX_SP    128
-#define	CTX_S8    132
-#define	CTX_RA    136
+#define	CTX_STATUS  4
+#define	CTX_LO      8
+#define	CTX_HI     12
+#define	CTX_AT     16
+#define	CTX_V0     20
+#define	CTX_V1     24
+#define	CTX_A0     28
+#define	CTX_A1     32
+#define	CTX_A2     36
+#define	CTX_A3     40
+#define	CTX_T0     44
+#define	CTX_T1     48
+#define	CTX_T2     52
+#define	CTX_T3     56
+#define	CTX_T4     60
+#define	CTX_T5     64
+#define	CTX_T6     68
+#define	CTX_T7     72
+#define	CTX_S0     76
+#define	CTX_S1     80
+#define	CTX_S2     84
+#define	CTX_S3     88
+#define	CTX_S4     92
+#define	CTX_S5     96
+#define	CTX_S6    100
+#define	CTX_S7    104
+#define	CTX_T8    108
+#define	CTX_T9    112
+#define	CTX_GP    116
+#define	CTX_SP    120
+#define	CTX_S8    124
+#define	CTX_RA    128
 
-#define CTXREGS	  (4*35)
+#define CTXREGS	  (4*(33 + 3))
 
 #define KREG_S0      0
 #define KREG_S1      4
@@ -203,7 +202,14 @@ typedef struct context *context_t;	/* context id */
 #define KREG_SP     40
 #define KREG_RA     44
 #define KREG_KSTACK 48
+#ifndef CONFIG_MMU
+#define KREG_STATUS 52
+#endif /* !CONFIG_MMU */
 
+#ifdef CONFIG_MMU
 #define KREGS     (4*13)
+#else
+#define KREGS     (4*14)
+#endif
 
 #endif /* !_MIPS_CONTEXT_H */

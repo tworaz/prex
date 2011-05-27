@@ -32,12 +32,9 @@
  */
 
 #include <sys/ipl.h>
-#include <kernel.h>
+#include <cpufunc.h>
 #include <hal.h>
 #include <irq.h>
-#include <cpufunc.h>
-#include <context.h>
-#include <locore.h>
 
 #include "platform.h"
 

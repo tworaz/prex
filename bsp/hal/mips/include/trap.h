@@ -41,7 +41,7 @@
 
 __BEGIN_DECLS
 void	 trap_handler(struct cpu_regs *);
-void	 trap_dump(struct cpu_regs *);
+void	 trap_dump(struct cpu_regs *, uint32_t cause, uint32_t vaddr);
 __END_DECLS
 
 #endif /* !__ASSEMBLY__ */

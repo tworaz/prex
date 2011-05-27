@@ -30,6 +30,7 @@
 #ifndef _MIPS_LOCORE_H
 #define _MIPS_LOCORE_H
 
+#include <conf/config.h>
 #include <sys/cdefs.h>
 #include <context.h>
 
@@ -46,104 +47,143 @@ __END_DECLS
 #else
 
 /*
- * Macro to store struct cpu_regs on the stack
+ * Bit from coprocesor 0 status register
+ * that should actually be saved
+ */
+#define STATUS_SAVE_MASK 0x1f
+
+/*
+ * Macro to store struct cpu_regs in memory
+ * pointed by the argument register
  * k0 = stack pointer to actualy save
  */
-.macro CONTEXT_SAVE
+.macro CONTEXT_SAVE r
 	.set push
 	.set noat
-	.set reorder
-	sub	sp, sp, CTXREGS
-	sw	ra, CTX_RA(sp)
-	sw	s8, CTX_S8(sp)
-	sw	k0, CTX_SP(sp)
-	sw	gp, CTX_GP(sp)
-	sw	t9, CTX_T9(sp)
-	sw	t8, CTX_T8(sp)
-	sw	s7, CTX_S7(sp)
-	sw	s6, CTX_S6(sp)
-	sw	s5, CTX_S5(sp)
-	sw	s4, CTX_S4(sp)
-	sw	s3, CTX_S3(sp)
-	sw	s2, CTX_S2(sp)
-	sw	s1, CTX_S1(sp)
-	sw	s0, CTX_S0(sp)
-	sw	t7, CTX_T7(sp)
-	sw	t6, CTX_T6(sp)
-	sw	t5, CTX_T5(sp)
-	sw	t4, CTX_T4(sp)
-	sw	t3, CTX_T3(sp)
-	sw	t2, CTX_T2(sp)
-	sw	t1, CTX_T1(sp)
-	sw	t0, CTX_T0(sp)
-	sw	a3, CTX_A3(sp)
-	sw	a2, CTX_A2(sp)
-	sw	a1, CTX_A1(sp)
-	sw	a0, CTX_A0(sp)
-	sw	v1, CTX_V1(sp)
-	sw	v0, CTX_V0(sp)
-	sw	AT, CTX_AT(sp)
-	mfhi	t0
-	mflo	t1
-	sw	t0, CTX_HI(sp)
-	sw	t1, CTX_LO(sp)
-	mfc0	t2, COP_0_CAUSE
-	sw	t2, CTX_CAUSE(sp)
-	mfc0	t3, COP_0_STATUS
-	sw	t3, CTX_STATUS(sp)
-	mfc0	t4, COP_0_BADVADDR
-	sw	t4, CTX_VADDR(sp)
-	mfc0	t5, COP_0_EPC
-	sw	t5, CTX_EPC(sp)
+	.set noreorder
+	sw	ra, CTX_RA(\r)
+	sw	s8, CTX_S8(\r)
+	sw	k0, CTX_SP(\r)
+	sw	gp, CTX_GP(\r)
+	sw	t9, CTX_T9(\r)
+	sw	t8, CTX_T8(\r)
+	sw	s7, CTX_S7(\r)
+	sw	s6, CTX_S6(\r)
+	sw	s5, CTX_S5(\r)
+	sw	s4, CTX_S4(\r)
+	sw	s3, CTX_S3(\r)
+	sw	s2, CTX_S2(\r)
+	sw	s1, CTX_S1(\r)
+	sw	s0, CTX_S0(\r)
+	sw	t7, CTX_T7(\r)
+	sw	t6, CTX_T6(\r)
+	sw	t5, CTX_T5(\r)
+	sw	t4, CTX_T4(\r)
+	sw	t3, CTX_T3(\r)
+	sw	t2, CTX_T2(\r)
+	sw	t1, CTX_T1(\r)
+	sw	t0, CTX_T0(\r)
+	sw	a3, CTX_A3(\r)
+	sw	a2, CTX_A2(\r)
+	sw	a1, CTX_A1(\r)
+	sw	a0, CTX_A0(\r)
+	sw	v1, CTX_V1(\r)
+	sw	v0, CTX_V0(\r)
+	sw	AT, CTX_AT(\r)
+
+	mfhi	AT
+	sw	AT, CTX_HI(\r)
+	mflo	AT
+	sw	AT, CTX_LO(\r)
+
+	mfc0	t0, COP_0_STATUS
+	mfc0	t1, COP_0_EPC
+
+	/* save only KSU, EXL, ERL, IE */
+	andi	t2, t0, STATUS_SAVE_MASK
+
+#ifdef CONFIG_MMU
+	/* clear KSU, EXL, ERL, IE */
+	li	t3, ~(STATUS_SAVE_MASK)
+	and	t0, t0, t3
+#endif /* CONFIG_MMU */
+
+	sw	t2, CTX_STATUS(\r)
+	sw	t1, CTX_EPC(\r)
+	mtc0	t0, COP_0_STATUS
 	.set pop
 .endm
 
 /*
  * Macro to restore struct cpu_regs from the stack
  */
-.macro CONTEXT_RESTORE
+.macro CONTEXT_RESTORE r
 	.set push
 	.set noat
-	.set reorder
-	lw	t0, CTX_EPC(sp)
-	lw	t1, CTX_STATUS(sp)
-	lw	t2, CTX_LO(sp)
-	lw	t3, CTX_HI(sp)
-	mtc0	t0, COP_0_EPC
-	mtlo	t2
-	mtc0	t1, COP_0_STATUS
-	mthi	t3
-	/* No need to restore BADVADDR and CAUSE */
-	lw	AT, CTX_AT(sp)
-	lw	v0, CTX_V0(sp)
-	lw	v1, CTX_V1(sp)
-	lw	a0, CTX_A0(sp)
-	lw	a1, CTX_A1(sp)
-	lw	a2, CTX_A2(sp)
-	lw	a3, CTX_A3(sp)
-	lw	t0, CTX_T0(sp)
-	lw	t1, CTX_T1(sp)
-	lw	t2, CTX_T2(sp)
-	lw	t3, CTX_T3(sp)
-	lw	t4, CTX_T4(sp)
-	lw	t5, CTX_T5(sp)
-	lw	t6, CTX_T6(sp)
-	lw	t7, CTX_T7(sp)
-	lw	s0, CTX_S0(sp)
-	lw	s1, CTX_S1(sp)
-	lw	s2, CTX_S2(sp)
-	lw	s3, CTX_S3(sp)
-	lw	s4, CTX_S4(sp)
-	lw	s5, CTX_S5(sp)
-	lw	s6, CTX_S6(sp)
-	lw	s7, CTX_S7(sp)
-	lw	t8, CTX_T8(sp)
-	lw	t9, CTX_T9(sp)
-	lw	gp, CTX_GP(sp)
-	lw	s8, CTX_S8(sp)
-	lw	ra, CTX_RA(sp)
+	.set noreorder
+	mfc0	t0, COP_0_STATUS
+	lw	t1, CTX_STATUS(\r)
+
+	/* Mask UM, EXL, ERL, IE */
+	li	t2, ~(STATUS_SAVE_MASK)
+	and	t0, t0, t2
+
+	/* Copy UM, EXL, ERL, IE from saved status */
+	or	t0, t0, t1
+	mtc0	t0, COP_0_STATUS
+
+	lw	t3, CTX_EPC(\r)
+	lw	t4, CTX_LO(\r)
+	lw	t5, CTX_HI(\r)
+	mtc0	t3, COP_0_EPC
+	mtlo	t4
+	mthi	t5
+
+	lw	AT, CTX_AT(\r)
+	lw	v0, CTX_V0(\r)
+	lw	v1, CTX_V1(\r)
+	lw	a0, CTX_A0(\r)
+	lw	a1, CTX_A1(\r)
+	lw	a2, CTX_A2(\r)
+	lw	a3, CTX_A3(\r)
+	lw	t0, CTX_T0(\r)
+	lw	t1, CTX_T1(\r)
+	lw	t2, CTX_T2(\r)
+	lw	t3, CTX_T3(\r)
+	lw	t4, CTX_T4(\r)
+	lw	t5, CTX_T5(\r)
+	lw	t6, CTX_T6(\r)
+	lw	t7, CTX_T7(\r)
+	lw	s0, CTX_S0(\r)
+	lw	s1, CTX_S1(\r)
+	lw	s2, CTX_S2(\r)
+	lw	s3, CTX_S3(\r)
+	lw	s4, CTX_S4(\r)
+	lw	s5, CTX_S5(\r)
+	lw	s6, CTX_S6(\r)
+	lw	s7, CTX_S7(\r)
+	lw	t8, CTX_T8(\r)
+	lw	t9, CTX_T9(\r)
+	lw	gp, CTX_GP(\r)
+	lw	s8, CTX_S8(\r)
+	lw	ra, CTX_RA(\r)
 	/* Stack goes last */
-	lw	sp, CTX_SP(sp)
+	lw	sp, CTX_SP(\r)
+	.set pop
+.endm
+
+/*
+ * Adjust given variable by val
+ */
+.macro ADJUST_VAR var val
+	.set push
+	.set noat
+	.set noreorder
+	la	k0, \var
+	lw	k1, 0(k0)
+	nop /* Load delay */
+	addiu	k1, k1, \val
+	sw	k1, 0(k0)
 	.set pop
 .endm
 

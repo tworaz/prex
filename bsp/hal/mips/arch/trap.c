@@ -43,7 +43,6 @@
 #include <trap.h>
 #include <cpufunc.h>
 #include <context.h>
-#include <locore.h>
 
 #if 0
 #ifdef DEBUG
@@ -72,9 +71,9 @@ static const int exception_map[] = {
 #endif
 
 #ifdef DEBUG
-# define DEBUG_TRAP(regs) trap_dump(regs)
+# define DEBUG_TRAP(r, c, v) trap_dump(r, c, v)
 #else
-# define DEBUG_TRAP(regs)
+# define DEBUG_TRAP(r, c, v)
 #endif
 
 /*
@@ -93,43 +92,35 @@ trap_handler(struct cpu_regs *r)
 {
 	uint32_t code;
 	uint32_t is_kern;
+	uint32_t cause = get_cp0_cause();
+	uint32_t vaddr = get_cp0_badvaddr();
 
-	code = (r->cause & MIPS_CAUSE_EXC_CODE_MASK) >> MIPS_CAUSE_EXC_CODE_SHIFT;
+	code = (cause & MIPS_CAUSE_EXC_CODE_MASK) >> MIPS_CAUSE_EXC_CODE_SHIFT;
 	is_kern = (r->status & MIPS_STATUS_KSU_MASK) == MIPS_STATUS_KSU_KERNEL;
 
+	/* Interrupts and syscalls should never go here */
 	ASSERT(code != MIPS_CAUSE_EXC_CODE_IRQ);
 	ASSERT(code != MIPS_CAUSE_EXC_CODE_SYS);
-
-	/* In non MMU version of Prex everything runs in kernel mode */
-#if 0
-	if (in_kernel > 1) {
-		DEBUG_TRAP(r);
-		panic("Kernel exception!");
-	}
-#endif
-	printf("ENTER: MIPS Trap code: %u, task: %s\n", code, curtask->name);
 
 	switch(code) {
 	case MIPS_CAUSE_EXC_CODE_TLBL:
 	case MIPS_CAUSE_EXC_CODE_TLBS:
-		DEBUG_TRAP(r);
+		DEBUG_TRAP(r, cause, vaddr);
 		panic("TLB exception in kernel\n");
 		exception_mark(SIGSEGV);
 		break;
 
 	case MIPS_CAUSE_EXC_CODE_RI:
-		DEBUG_TRAP(r);
+		DEBUG_TRAP(r, cause, vaddr);
 		exception_mark(SIGILL);
 		break;
 
 	default:
-		DEBUG_TRAP(r);
+		DEBUG_TRAP(r, cause, vaddr);
 		panic("Unhandled exception type!");
 	}
 
 	exception_deliver();
-
-	printf("LEAVE: MIPS Trap task: %s\n", curtask->name);
 
 	/* Disable interrupts */
 	splhigh();
@@ -168,7 +159,7 @@ trap_handler(struct cpu_regs *r)
 
 #ifdef DEBUG
 void
-trap_dump(struct cpu_regs *r)
+trap_dump(struct cpu_regs *r, uint32_t cause, uint32_t vaddr)
 {
 	printf("\nTrap frame %x, task=%s\n", r, curtask->name);
 
@@ -184,6 +175,6 @@ trap_dump(struct cpu_regs *r)
 	       r->t9, r->gp, r->sp, r->s8, r->ra);
 
 	printf("\n epc %08x  bad %08x  status %08x  cause %08x\n\n",
-	       r->epc, r->vaddr, r->status, r->cause);
+	       r->epc, vaddr, r->status, cause);
 }
 #endif /* !DEBUG */

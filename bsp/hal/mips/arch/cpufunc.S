@@ -50,6 +50,7 @@ ENTRY(irq_enable)
 	ehb
 END(irq_enable)
 
+
 /*
  * Disable interrupts by clearing IE bit in SR
  */
@@ -61,5 +62,25 @@ ENTRY(irq_disable)
 	jr	ra
 	ehb
 END(irq_disable)
+
+
+/*
+ * Get coprocessor 0 cause register value
+ */
+ENTRY(get_cp0_cause)
+	mfc0	v0, COP_0_CAUSE
+	jr	ra
+	ehb
+END(get_cp0_cause)
+
+
+/*
+ * Get coprocessor 0 badvaddr register value
+ */
+ENTRY(get_cp0_badvaddr)
+	mfc0	v0, COP_0_BADVADDR
+	jr	ra
+	ehb
+END(get_cp0_badvaddr)
 
 	.set reorder

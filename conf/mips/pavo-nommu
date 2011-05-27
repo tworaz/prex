@@ -5,7 +5,7 @@
 #
 # Make options
 #
-makeoptions	GCCFLAGS+= -EL -G 0 -mno-abicalls -fno-pic -mips32 -msoft-float
+makeoptions	GCCFLAGS+= -EL -G 0 -mips32 -msoft-float -mabi=32
 makeoptions	ASFLAGS+= -EL -msoft-float
 makeoptions	LDFLAGS+= -EL
 
@@ -80,7 +80,7 @@ options 	ARFS		# Archive file system
 #device		pm		# Power management
 device		cons		# System console
 device		serial		# Generic serial
-#device  	pl011		# ARM PrimeCell PL011 UART (P:serial)
+device  	jz47xx_serial	# Ingenic JZ47xx SOC serial port
 device		rtc		# Logical RTC
 #device 	pl030		# ARM PrimeCell PL030 RTC
 device		null		# NULL device

@@ -34,17 +34,10 @@
 #include <sys/types.h>
 
 __BEGIN_DECLS
-void	irq_enable(void);
-void	irq_disable(void);
-#if 0
-int	 get_faultstatus(void);
-void	*get_faultaddress(void);
-paddr_t	 get_ttb(void);
-void	 set_ttb(paddr_t);
-void	 switch_ttb(paddr_t);
-void	 flush_tlb(void);
-void	 flush_cache(void);
-#endif
+void     irq_enable(void);
+void     irq_disable(void);
+uint32_t get_cp0_cause(void);
+uint32_t get_cp0_badvaddr(void);
 __END_DECLS
 
 #endif /* !_MIPS_CPUFUNC_H */

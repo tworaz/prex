@@ -41,9 +41,9 @@ static void
 serial_putc(char c)
 {
 	/* wait for room in the tx FIFO */
-	while (!((UART_LSR & (UART_LSR_TDRQ | UART_LSR_TEMP)) == 0x60));
+	while (!((JZ_UART_LSR & (JZ_UART_LSR_TDRQ | JZ_UART_LSR_TEMP)) == 0x60));
 
-	UART_THR = (uint8_t)c;
+	JZ_UART_THR = (uint8_t)c;
 }
 
 void

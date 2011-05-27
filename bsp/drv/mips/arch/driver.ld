@@ -39,15 +39,6 @@ SECTIONS
                 *(.sdata.*)
 	} : data = 0xff
 
-        . = ALIGN(4);
-
-	.sbss . : {
-		*(.sbss)
-		*(.sbss.*)
-		*(.dynsbss)
-		*(.scommon)
-	}
-
 	. = ALIGN(4);
 
 	.bss . : {
@@ -55,6 +46,10 @@ SECTIONS
 		*(.bss.*)
 		*(.dynbss)
 		*(COMMON)
+		*(.sbss)
+		*(.sbss.*)
+		*(.dynsbss)
+		*(.scommon)
 	}
 
 	/DISCARD/ : { *(.comment .pdr .note) }

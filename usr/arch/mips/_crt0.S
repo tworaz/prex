@@ -51,12 +51,14 @@
 	.global _start
 	.set noreorder
 _start:
-	la	gp, _gp
+	/* la	gp, _gp */
 
 	lw	a0, 0(sp)
 	addiu	a1, sp, 4
 
-	addu	a2, a1, a0
+	sll	t0, a0, 2
+	addu	a2, a1, t0
+	move	a3, zero
 
 	j	__prex_main
 	addiu	sp, sp, -16

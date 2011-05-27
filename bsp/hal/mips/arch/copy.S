@@ -81,10 +81,10 @@ ENTRY(copyout)
 	j	ra
 	li	v0, EFAULT
 1:
-	lb	t3, 0(a1)
+	lb	t3, 0(a0)
 known_fault2:
 	addiu	a2, a2, -1
-	sb	t3, 0(a0)
+	sb	t3, 0(a1)
 	addiu	a0, a0, 1
 	bne	a2, zero, 1b
 	addiu	a1, a1, 1

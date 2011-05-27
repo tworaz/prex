@@ -43,7 +43,7 @@
  * | Boot stack       |
  * +------------------+ +0x1000
  * |                  |
- * | Sys mode stack   |
+ * | Exc mode stack   |
  * |                  |
  * +------------------+ +0x3000
  * |                  |
@@ -65,9 +65,9 @@
 #define SYSPAGE		CONFIG_SYSPAGE_BASE
 #define BOOTINFO	(SYSPAGE + 0x0400)
 #define BOOTSTK		(SYSPAGE + 0x0800)
-#define SYSSTK		(SYSPAGE + 0x1000)
+#define EXCSTK		(SYSPAGE + 0x1000)
 #define INTSTK		(SYSPAGE + 0x3000)
-#define BOOT_PGD	(SYSPAGE + 0x4000)
+#define BOOT_PGD	(SYSPAGE + 0x5000)
 #define BOOT_PTE0	(SYSPAGE + 0xB000)
 #define BOOT_PTE1	(SYSPAGE + 0xC000)
 
@@ -77,11 +77,11 @@
 #define BOOT_PTE1_PHYS	0x9000
 #endif
 
-#define SYSSTKSZ	0x2000
+#define EXCSTKSZ	0x2000
 #define INTSTKSZ	0x2000
 #define BOOTSTKSZ	0x0800
 
-#define SYSSTKTOP	(SYSSTK  + SYSSTKSZ)
+#define EXCSTKTOP	(EXCSTK  + EXCSTKSZ)
 #define INTSTKTOP	(INTSTK  + INTSTKSZ)
 #define BOOTSTKTOP	(BOOTSTK + BOOTSTKSZ)
 
