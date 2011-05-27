@@ -62,14 +62,14 @@
  * +------------------+ +0xA000
  */
 
-#define SYSPAGE		CONFIG_SYSPAGE_BASE
-#define BOOTINFO	(SYSPAGE + 0x0400)
-#define BOOTSTK		(SYSPAGE + 0x0800)
-#define EXCSTK		(SYSPAGE + 0x1000)
-#define INTSTK		(SYSPAGE + 0x3000)
-#define BOOT_PGD	(SYSPAGE + 0x5000)
-#define BOOT_PTE0	(SYSPAGE + 0xB000)
-#define BOOT_PTE1	(SYSPAGE + 0xC000)
+#define SYSPAGE     CONFIG_SYSPAGE_BASE
+#define BOOTINFO    (SYSPAGE + 0x0400)
+#define BOOTSTK     (SYSPAGE + 0x0800)
+#define EXCSTK      (SYSPAGE + 0x1000)
+#define INTSTK      (SYSPAGE + 0x3000)
+#define BOOT_PGD    (SYSPAGE + 0x5000)
+#define BOOT_PTE0   (SYSPAGE + 0xB000)
+#define BOOT_PTE1   (SYSPAGE + 0xC000)
 
 #if 0
 #define BOOT_PGD_PHYS	0x4000
