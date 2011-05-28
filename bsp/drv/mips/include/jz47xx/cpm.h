@@ -30,4 +30,37 @@
 #ifndef _JZ_CPM_H
 #define _JZ_CPM_H
 
+#define	JZ_CPM_BASE   (0x10000000 | MIPS_KSEG1)
+
+/* Clock Reset and Power Controller registers */
+#define	JZ_CPM_CLOCK_CTRL        (JZ_CPM_BASE + 0x00)
+#define	JZ_CPM_LOW_POWER_CTRL    (JZ_CPM_BASE + 0x04)
+#define	JZ_CPM_PLL_CTRL          (JZ_CPM_BASE + 0x10)
+#define	JZ_CPM_CLK_GATE          (JZ_CPM_BASE + 0x20)
+#define	JZ_CPM_SLEEP_CTRL        (JZ_CPM_BASE + 0x24)
+#define	JZ_CPM_I2S_DEV_CLOCK_DIV (JZ_CPM_BASE + 0x60)
+#define	JZ_CPM_LCD_PIX_CLK_DIV   (JZ_CPM_BASE + 0x64)
+#define	JZ_CPM_MSC_DEV_CLK_DIV   (JZ_CPM_BASE + 0x68)
+#define	JZ_CPM_UHC_48M_CLK_DIV   (JZ_CPM_BASE + 0x6C)
+#define	JZ_CPM_UHC_PHY_TST       (JZ_CPM_BASE + 0x70)
+#define	JZ_CPM_SSI_CLK_DIV       (JZ_CPM_BASE + 0x74)
+
+/* Clock Gate Register Bits */
+#define	JZ_CPM_CLK_GATE_UART0	(1 << 0)
+#define	JZ_CPM_CLK_GATE_TCU	(1 << 1)
+#define	JZ_CPM_CLK_GATE_RTC	(1 << 2)
+#define	JZ_CPM_CLK_GATE_I2C	(1 << 3)
+#define	JZ_CPM_CLK_GATE_SSI	(1 << 4)
+#define	JZ_CPM_CLK_GATE_AIC	(1 << 5)
+#define	JZ_CPM_CLK_GATE_AIC2	(1 << 6)
+#define	JZ_CPM_CLK_GATE_MSC	(1 << 7)
+#define	JZ_CPM_CLK_GATE_SADC	(1 << 8)
+#define	JZ_CPM_CLK_GATE_CIM	(1 << 9)
+#define	JZ_CPM_CLK_GATE_LCD	(1 << 10)
+#define	JZ_CPM_CLK_GATE_UDC	(1 << 11)
+#define	JZ_CPM_CLK_GATE_DMAC	(1 << 12)
+#define	JZ_CPM_CLK_GATE_IPU	(1 << 13)
+#define	JZ_CPM_CLK_GATE_UHC	(1 << 14)
+#define	JZ_CPM_CLK_GATE_UART1	(1 << 15)
+
 #endif /* !JZ_CPM_H */

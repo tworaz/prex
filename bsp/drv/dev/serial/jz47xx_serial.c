@@ -37,10 +37,20 @@
 #include <tty.h>
 #include <serial.h>
 
-#if 0
-#define UART_CLK	14745600
-#define BAUD_RATE	115200
-#endif 
+/* JZ47XX UART port to use for serial interface */
+#ifdef CONFIG_JZ47XX_SERIAL_UART_PORT
+#define JZ_UART_PORT CONFIG_JZ47XX_SERIAL_UART_PORT
+#else
+#define JZ_UART_PORT 0
+#endif /* CONFIG_JZ47XX_SERIAL_UART_PORT */
+
+/* Baud rate for serial port */
+#ifdef CONFIG_SERIAL_BAUD
+#define BAUD_RATE CONFIG_SERIAL_BAUD
+#else
+#define BAUD_RATE 115200
+#endif /* CONFIG_SERIAL_BAUD */
+
 
 /* Forward functions */
 static int	jz47xx_serial_init(struct driver *);
@@ -76,44 +86,81 @@ static void
 jz47xx_serial_xmt_char(struct serial_port *sp, char c)
 {
 	/* wait for room in the tx FIFO */
-	while (!((bus_read_8(JZ_UART_LSR) &
-	          (JZ_UART_LSR_TDRQ | JZ_UART_LSR_TEMP)) == 0x60))
+	while (! ((bus_read_8( JZ_UART_LINE_STATUS(JZ_UART_PORT) ) &
+	           (JZ_UART_LINE_STATUS_TDRQ | JZ_UART_LINE_STATUS_TEMP)) == 0x60) )
 	    continue;
 
-	bus_write_8(JZ_UART_THR, (uint8_t)c);
+	bus_write_8(JZ_UART_TX(JZ_UART_PORT), (uint8_t)c);
 }
 
 static char
 jz47xx_serial_rcv_char(struct serial_port *sp)
 {
-#if 0
 	char c;
 
-	while (bus_read_32(UART_FR) & FR_RXFE)
-		;
-	c = bus_read_32(UART_DR) & 0xff;
+	while (!(bus_read_8(JZ_UART_LINE_STATUS(JZ_UART_PORT)) &
+	         JZ_UART_LINE_STATUS_DRY))
+	    continue;
+
+	c = bus_read_8(JZ_UART_RX(JZ_UART_PORT));
 	return c;
-#endif
-	return 'a';
 }
 
 static void
 jz47xx_serial_set_poll(struct serial_port *sp, int on)
 {
-#if 0
 	if (on) {
-		/*
-		 * Disable interrupt for polling mode.
-		 */
-		bus_write_32(UART_IMSC, 0);
-	} else
-		bus_write_32(UART_IMSC, (IMSC_RX | IMSC_TX));
-#endif
+		/* Disable interrupt for polling mode */
+		bus_write_8(JZ_UART_IRQ_EN(JZ_UART_PORT), 0x00);
+	} else {
+		/* Enable tx/rx interrupt */
+		bus_write_8(JZ_UART_IRQ_EN(JZ_UART_PORT),
+		            (JZ_UART_IRQ_EN_RDRIE | JZ_UART_IRQ_EN_TDRIE));
+	}
 }
 
 static int
 jz47xx_serial_isr(void *arg)
 {
+	struct serial_port *sp = arg;
+	int c;
+	uint8_t id, tmp;
+
+	id = bus_read_8(JZ_UART_IRQ_IDENT(JZ_UART_PORT));
+
+	/* Spurious interrupt? */
+	if (id & JZ_UART_IRQ_IDENT_PEND) {
+		printf("Spurious UART interrupt\n");
+		return -1;
+	}
+
+	id &= JZ_UART_IRQ_IDENT_ID_MASK;
+	switch (id) {
+	case JZ_UART_IRQ_IDENT_ID_RX:
+		/*
+		 * Receive interrupt
+		 */
+		tmp = bus_read_8(JZ_UART_LINE_STATUS(JZ_UART_PORT));
+		while (tmp & JZ_UART_LINE_STATUS_DRY) {
+			c = bus_read_8(JZ_UART_RX(JZ_UART_PORT));
+			serial_rcv_char(sp, c);
+			tmp = bus_read_8(JZ_UART_LINE_STATUS(JZ_UART_PORT));
+		}
+		break;
+	case JZ_UART_IRQ_IDENT_ID_TX:
+		/*
+		 * Transmit interrupt
+		 */
+		serial_xmt_done(sp);
+		break;
+	default:
+		/*
+		sys_log("Unhandled interrupt type 0x%x\n", id);
+		*/
+		return -1;
+	}
+
+	return 0;
 #if 0
 	struct serial_port *sp = arg;
 	int c;
@@ -145,51 +192,67 @@ jz47xx_serial_isr(void *arg)
 		bus_write_32(UART_ICR, ICR_TX);
 	}
 #endif
-	return 0;
 }
 
 static void
 jz47xx_serial_start(struct serial_port *sp)
 {
-#if 0
-	uint32_t divider, remainder, fraction;
+	uint8_t  lcr;
+	uint16_t div;
+	uint32_t clkgr;
 
-	bus_write_32(UART_CR, 0);	/* Disable everything */
-	bus_write_32(UART_ICR, 0x07ff);	/* Clear all interrupt status */
+	/* Enable UART module clock */
+	clkgr = bus_read_32(JZ_CPM_CLK_GATE);
+	clkgr &= ~(JZ_CPM_CLK_GATE_UART0);
+	bus_write_32(JZ_CPM_CLK_GATE, clkgr);
 
-	/*
-	 * Set baud rate:
-	 * IBRD = UART_CLK / (16 * BAUD_RATE)
-	 * FBRD = ROUND((64 * MOD(UART_CLK,(16 * BAUD_RATE))) / (16 * BAUD_RATE))
-	 */
-	divider = UART_CLK / (16 * BAUD_RATE);
-	remainder = UART_CLK % (16 * BAUD_RATE);
-	fraction = (8 * remainder / BAUD_RATE) >> 1;
-	fraction += (8 * remainder / BAUD_RATE) & 1;
-	bus_write_32(UART_IBRD, divider);
-	bus_write_32(UART_FBRD, fraction);
+	/* Disable UART module */
+	bus_write_8(JZ_UART_FIFO_CTRL(JZ_UART_PORT), 0x00);
 
-	/* Set N, 8, 1, FIFO enable */
-	bus_write_32(UART_LCRH, (LCRH_WLEN8 | LCRH_FEN));
+	/* Enable access to latch regs, set char 8bit*/
+	lcr = JZ_UART_LINE_CTRL_DLAB | 0x03;
+	bus_write_8(JZ_UART_LINE_CTRL(JZ_UART_PORT), lcr);
+
+	/* Set baud rate */
+	div = JZ_UART_CLK/(16 * BAUD_RATE);
+	bus_write_8(JZ_UART_LATCH_LO(JZ_UART_PORT), (uint8_t)div);
+	bus_write_8(JZ_UART_LATCH_HI(JZ_UART_PORT), (uint8_t)(div >> 8));
+
+	/* Disable access to latch regs */
+	lcr &= ~(JZ_UART_LINE_CTRL_DLAB);
+	bus_write_8(JZ_UART_LINE_CTRL(JZ_UART_PORT), lcr);
+
+	/* Enable FIFO and reset it */
+	bus_write_8(JZ_UART_FIFO_CTRL(JZ_UART_PORT), JZ_UART_FIFO_CTRL_FME);
+	bus_write_8(JZ_UART_FIFO_CTRL(JZ_UART_PORT), JZ_UART_FIFO_CTRL_RFRT);
+	bus_write_8(JZ_UART_FIFO_CTRL(JZ_UART_PORT), JZ_UART_FIFO_CTRL_TFRT);
+	bus_write_8(JZ_UART_FIFO_CTRL(JZ_UART_PORT),
+	            (0x00 << JZ_UART_FIFO_CTRL_RDTR_SHIFT));
+
+	/* Register interrupt handler */
+	sp->irq = irq_attach(JZ_UART_IRQ, IPL_COMM, 0,
+	                     jz47xx_serial_isr, IST_NONE, sp);
+
+	/* Enable tx/rx interrupt */
+	bus_write_8(JZ_UART_IRQ_EN(JZ_UART_PORT),
+	            (JZ_UART_IRQ_EN_RDRIE | JZ_UART_IRQ_EN_TDRIE));
 
 	/* Enable UART */
-	bus_write_32(UART_CR, (CR_RXE | CR_TXE | CR_UARTEN));
-
-	/* Install interrupt handler */
-	sp->irq = irq_attach(UART_IRQ, IPL_COMM, 0, pl011_isr, IST_NONE, sp);
-
-	/* Enable TX/RX interrupt */
-	bus_write_32(UART_IMSC, (IMSC_RX | IMSC_TX));
-#endif
+	bus_write_8(JZ_UART_FIFO_CTRL(JZ_UART_PORT), JZ_UART_FIFO_CTRL_UME);
 }
 
 static void
 jz47xx_serial_stop(struct serial_port *sp)
 {
-#if 0
-	bus_write_32(UART_IMSC, 0);	/* Disable all interrupts */
-	bus_write_32(UART_CR, 0);	/* Disable everything */
-#endif
+	uint32_t clkgr;
+
+	/* Disable UART port */
+	bus_write_8(JZ_UART_FIFO_CTRL(JZ_UART_PORT), 0x00);
+
+	/* Disable clock for UART module */
+	clkgr = bus_read_32(JZ_CPM_CLK_GATE);
+	clkgr |= JZ_CPM_CLK_GATE_UART0;
+	bus_write_32(JZ_CPM_CLK_GATE, clkgr);
 }
 
 static int
